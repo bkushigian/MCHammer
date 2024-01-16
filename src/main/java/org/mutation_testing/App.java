@@ -1,4 +1,4 @@
-package org.mutation-testing;
+package org.mutation_testing;
 
 /**
  * Hello world!
