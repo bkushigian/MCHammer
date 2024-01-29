@@ -12,8 +12,6 @@ public class RelationalVisitorTest {
         CompilationUnit cu = StaticJavaParser.parse("class A { boolean m(int x) { return x >= 32 && x < 127; } }");
         RelationalVisitor v = new RelationalVisitor();
         v.visit(cu, null);
-
-
     }
 
 }

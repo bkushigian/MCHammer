@@ -1,5 +1,7 @@
 package org.mutation_testing;
 
+import java.util.StringJoiner;
+
 import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.BooleanLiteralExpr;
 import com.github.javaparser.ast.expr.CharLiteralExpr;
@@ -53,6 +55,10 @@ public class ExpressionPropertyVisitor extends GenericVisitorAdapter<ExpressionP
 
         boolean hasUnhandledProperties = false;
 
+        boolean canMutate() {
+            return isSimpleRelational || isSimpleArithmetic || isSimplePredicate || isSimpleLogical;
+        }
+
         boolean isTerminal() {
             return isName || isLiteral;
         }
@@ -83,6 +89,28 @@ public class ExpressionPropertyVisitor extends GenericVisitorAdapter<ExpressionP
                     + ", isSimplePredicate=" + isSimplePredicate + ", isSimpleLogical=" + isSimpleLogical + ", isName="
                     + isName + ", isLiteral=" + isLiteral + ", hasUnhandledProperties=" + hasUnhandledProperties +
                     ", isPure=" + isPure + "]";
+        }
+
+        public String summarizeProperties() {
+            StringJoiner sj = new StringJoiner(", ");
+            if (isSimpleLogical) {
+                sj.add("Simple Logical");
+            } else if (isSimpleRelational) {
+                sj.add("Simple Relational");
+            } else if (isSimpleArithmetic){
+                sj.add("Simple Arithmetic");
+            } else if (isSimplePredicate){
+                sj.add("Simple Predicate");
+            } else if (isName){
+                sj.add("Name");
+            } else if (isLiteral){
+                sj.add("Literal");
+            } else if (hasUnhandledProperties){
+                sj.add("Unhandled");
+            }
+
+            return sj.toString();
+
         }
     }
 
