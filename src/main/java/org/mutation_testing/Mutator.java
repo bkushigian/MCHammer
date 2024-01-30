@@ -1,4 +1,5 @@
 package org.mutation_testing;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,16 +16,32 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.CallableDeclaration.Signature;
 import com.github.javaparser.ast.expr.BinaryExpr;
+import com.github.javaparser.ast.expr.CharLiteralExpr;
 import com.github.javaparser.ast.expr.ConditionalExpr;
+import com.github.javaparser.ast.expr.DoubleLiteralExpr;
 import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.IntegerLiteralExpr;
+import com.github.javaparser.ast.expr.LongLiteralExpr;
 import com.github.javaparser.ast.expr.UnaryExpr;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
+import com.github.javaparser.resolution.TypeSolver;
+import com.github.javaparser.resolution.types.ResolvedType;
+import com.github.javaparser.symbolsolver.JavaSymbolSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 
 public class Mutator extends VoidVisitorAdapter<Void> {
     protected int mid = 1;
     protected Source source;
+
     protected ExpressionPropertyVisitor epv = new ExpressionPropertyVisitor();
     protected RelationalVisitor rv = new RelationalVisitor();
+
+    protected TypeSolver typeSolver = new CombinedTypeSolver();
+    protected JavaSymbolSolver symbolSolver = new JavaSymbolSolver(typeSolver);
+
+    public Mutator() {
+        StaticJavaParser.getParserConfiguration().setSymbolResolver(symbolSolver);
+    }
 
     /**
      * Mutants for the current file
@@ -63,12 +80,42 @@ public class Mutator extends VoidVisitorAdapter<Void> {
         return result;
     }
 
+    protected Expression getInfectingExpression(Expression e) {
+        System.out.println("Calculating type...");
+        ResolvedType type = e.calculateResolvedType();
+        Expression clonedExpr = e.clone();
+        System.out.println("  TYPE: " + type.describe());
+        if (type.isPrimitive()) {
+
+            switch (type.asPrimitive()) {
+                case BOOLEAN:
+                    return new UnaryExpr(clonedExpr, UnaryExpr.Operator.LOGICAL_COMPLEMENT);
+                case CHAR:
+                    return new BinaryExpr(clonedExpr, new CharLiteralExpr((char) 97), BinaryExpr.Operator.PLUS);
+                case BYTE:
+                case SHORT:
+                case INT:
+                    return new BinaryExpr(clonedExpr, new IntegerLiteralExpr("97"), BinaryExpr.Operator.PLUS);
+                case LONG:
+                    return new BinaryExpr(clonedExpr, new LongLiteralExpr("97"), BinaryExpr.Operator.PLUS);
+                case FLOAT:
+                case DOUBLE:
+                    return new BinaryExpr(clonedExpr, new DoubleLiteralExpr("11.0"), BinaryExpr.Operator.PLUS);
+                default:
+                    throw new IllegalArgumentException("Unhandled primitive type " + type);
+            }
+        }
+        return null;
+    }
+
     protected void addMutantFromCondition(Expression originalExpr, Expression mutationCondition) {
-        // TODO: Assumes this is a boolean expression and that the mutation is
-        //       just negation. In general this can be any type of expression
-        //       and we need to account for it.
-        Expression mutatedExpr = new UnaryExpr(originalExpr, UnaryExpr.Operator.LOGICAL_COMPLEMENT);
-        Expression repl = new ConditionalExpr(mutationCondition, mutatedExpr, originalExpr);
+        Expression mutatedExpr = getInfectingExpression(originalExpr);
+        Expression clonedOriginalExpr = originalExpr.clone();
+        clonedOriginalExpr.setParentNode(null);
+        if (!originalExpr.getParentNode().isPresent()) {
+            System.out.println("ERROR");
+        }
+        Expression repl = new ConditionalExpr(mutationCondition, mutatedExpr, clonedOriginalExpr);
         addMutant(originalExpr, repl);
     }
 

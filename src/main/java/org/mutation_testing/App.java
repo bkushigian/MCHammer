@@ -8,6 +8,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.symbolsolver.*;
+
 /**
  * Hello world!
  *
@@ -54,7 +57,7 @@ public class App {
     }
 
     void run() {
-        List<Mutant> mutants = new ArrayList<>();
+        final List<Mutant> mutants = new ArrayList<>();
         if (filenames.isEmpty()) {
             System.out.println("No files to mutate");
             return;
