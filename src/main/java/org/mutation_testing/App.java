@@ -15,15 +15,18 @@ import java.util.List;
 public class App {
     List<String> filenames = new ArrayList<>();
     String outdir = "msav_out";
+    String mutantsLog = "mutants.msav.log";
     Mutator mutator = new Mutator();
 
-    public App(List<String> filenames, String outdir) {
+    public App(List<String> filenames, String outdir, String mutantsLog) {
         this.filenames = filenames;
         this.outdir = outdir;
+        this.mutantsLog = mutantsLog;
     }
 
     public static void main(String[] args) {
         String outdir = "msav_out";
+        String mutantsLog = "mutants.msav.log";
         List<String> filenames = new ArrayList<>();
         for (int i = 0; i < args.length; ++i) {
             if ("--outdir".equals(args[i])) {
@@ -34,16 +37,28 @@ public class App {
                 }
                 outdir = args[i];
                 continue;
+            } else if ("--log".equals(args[i])) {
+                i += 1;
+                if (i >= args.length) {
+                    System.err.println("Missing argument for --log");
+                    System.exit(1);
+                }
+                mutantsLog = args[i];
+                continue;
             }
             filenames.add(args[i]);
         }
 
-        App app = new App(filenames, outdir);
+        App app = new App(filenames, outdir, mutantsLog);
         app.run();
     }
 
     void run() {
         List<Mutant> mutants = new ArrayList<>();
+        if (filenames.isEmpty()) {
+            System.out.println("No files to mutate");
+            return;
+        }
         for (String filename : filenames) {
             try {
                 mutants.addAll(mutator.mutateFile(filename));
@@ -66,6 +81,10 @@ public class App {
                 return;
             }
         }
+
+        System.out.println("Writing mutant log to " + mutantsLog);
+        Mutant.writeMutantsLog(mutantsLog, mutants);
+
         for (Mutant mutant : mutants) {
             Path d = mutantsDir.resolve(mutant.mid + "");
             if (Files.exists(d)) {
@@ -94,7 +113,7 @@ public class App {
 
     private void delete(File f) {
         if (f.isDirectory()) {
-            for (File c : f.listFiles()){
+            for (File c : f.listFiles()) {
                 delete(c);
             }
         }

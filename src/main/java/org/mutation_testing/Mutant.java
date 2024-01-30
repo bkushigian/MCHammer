@@ -1,5 +1,9 @@
 package org.mutation_testing;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.List;
 import java.util.StringJoiner;
 
 import com.github.javaparser.Position;
@@ -60,5 +64,32 @@ public class Mutant {
                 .add(replNode.toString());
 
         return sj.toString();
+    }
+
+    public String asMajorLogItem() {
+        StringJoiner sj = new StringJoiner(":");
+        String origString = origNode.toString();
+        String replString = replNode.toString();
+        String mutantLogString = origString + " |==> " + replString;
+        sj.add("" + mid)
+                .add("MSAV")
+                .add("")
+                .add("")
+                .add(this.source.getFilename())
+                .add(origNode.getBegin().get().toString())
+                .add(mutantLogString);
+
+        return sj.toString();
+    }
+
+    public static void writeMutantsLog(String logFile, List<Mutant> mutants) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(logFile))) {
+            for (Mutant mutant : mutants) {
+                pw.println(mutant.asMajorLogItem());
+            }
+        } catch (IOException e) {
+            System.err.println("Error writing mutants log file " + logFile);
+            e.printStackTrace();
+        }
     }
 }
