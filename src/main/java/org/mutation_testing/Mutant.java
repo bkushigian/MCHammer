@@ -43,7 +43,7 @@ public class Mutant {
         StringBuilder replBuilder = new StringBuilder();
         replBuilder.append(lines[beginLine].substring(0, beginColumn));
         replBuilder.append(replNode.toString());
-        replBuilder.append(lines[endLine].substring(endColumn));
+        replBuilder.append(lines[endLine].substring(endColumn + 1));
         sj.add(replBuilder.toString());
 
         // Finally, get everything after the mutated node

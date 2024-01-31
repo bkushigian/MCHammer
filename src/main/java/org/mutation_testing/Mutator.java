@@ -19,6 +19,7 @@ import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.CharLiteralExpr;
 import com.github.javaparser.ast.expr.ConditionalExpr;
 import com.github.javaparser.ast.expr.DoubleLiteralExpr;
+import com.github.javaparser.ast.expr.EnclosedExpr;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.IntegerLiteralExpr;
 import com.github.javaparser.ast.expr.LongLiteralExpr;
@@ -83,7 +84,7 @@ public class Mutator extends VoidVisitorAdapter<Void> {
     protected Expression getInfectingExpression(Expression e) {
         System.out.println("Calculating type...");
         ResolvedType type = e.calculateResolvedType();
-        Expression clonedExpr = e.clone();
+        Expression clonedExpr = new EnclosedExpr(e.clone());
         System.out.println("  TYPE: " + type.describe());
         if (type.isPrimitive()) {
 
@@ -110,12 +111,12 @@ public class Mutator extends VoidVisitorAdapter<Void> {
 
     protected void addMutantFromCondition(Expression originalExpr, Expression mutationCondition) {
         Expression mutatedExpr = getInfectingExpression(originalExpr);
-        Expression clonedOriginalExpr = originalExpr.clone();
+        Expression clonedOriginalExpr = new EnclosedExpr(originalExpr.clone());
         clonedOriginalExpr.setParentNode(null);
         if (!originalExpr.getParentNode().isPresent()) {
             System.out.println("ERROR");
         }
-        Expression repl = new ConditionalExpr(mutationCondition, mutatedExpr, clonedOriginalExpr);
+        Expression repl = new ConditionalExpr(new EnclosedExpr(mutationCondition), mutatedExpr, clonedOriginalExpr);
         addMutant(originalExpr, repl);
     }
 
