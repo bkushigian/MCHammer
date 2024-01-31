@@ -1,3 +1,6 @@
 target/
 .vscode/
 msav_out/
+msav.zip
+mutants.msav.log
+dependency-reduced-pom.xml
