@@ -6,7 +6,7 @@ package org.mutation_testing;
 public class Source {
     String filename;
     String contents;
-    String[] lines;
+    private final String[] lines;
 
     public Source(String filename, String contents) {
         this.filename = filename;
