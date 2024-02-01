@@ -117,6 +117,7 @@ public class Mutator extends VoidVisitorAdapter<Void> {
             System.out.println("ERROR");
         }
         Expression repl = new ConditionalExpr(new EnclosedExpr(mutationCondition), mutatedExpr, clonedOriginalExpr);
+        repl = new EnclosedExpr(repl);
         addMutant(originalExpr, repl);
     }
 
