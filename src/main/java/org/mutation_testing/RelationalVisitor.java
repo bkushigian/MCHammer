@@ -1,4 +1,5 @@
 package org.mutation_testing;
+
 import java.util.List;
 
 import com.github.javaparser.ast.expr.BinaryExpr;
@@ -15,10 +16,8 @@ public class RelationalVisitor extends VoidVisitorAdapter<List<Expression>> {
         return e.isNameExpr() || e.isLiteralExpr();
     }
 
-
     @Override
     public void visit(BinaryExpr n, List<Expression> arg) {
-        System.out.println("RELATIONAL VISITOR: " + n + ", " + arg);
         switch (n.getOperator()) {
             case EQUALS:
             case NOT_EQUALS:
@@ -26,8 +25,7 @@ public class RelationalVisitor extends VoidVisitorAdapter<List<Expression>> {
             case GREATER_EQUALS:
             case LESS:
             case LESS_EQUALS:
-                System.out.println("  Found relational expression...adding to method relations");
-                if (arg != null){
+                if (arg != null) {
                     arg.add(n);
                 }
                 return;
