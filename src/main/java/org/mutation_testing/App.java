@@ -112,6 +112,7 @@ public class App {
                 return;
             }
         }
+        System.out.println("Generated " + mutants.size() + " mutants in " + mutantsDir);
     }
 
     private void delete(File f) {

@@ -82,10 +82,8 @@ public class Mutator extends VoidVisitorAdapter<Void> {
     }
 
     protected Expression getInfectingExpression(Expression e) {
-        System.out.println("Calculating type...");
         ResolvedType type = e.calculateResolvedType();
         Expression clonedExpr = new EnclosedExpr(e.clone());
-        System.out.println("  TYPE: " + type.describe());
         if (type.isPrimitive()) {
 
             switch (type.asPrimitive()) {
@@ -114,7 +112,7 @@ public class Mutator extends VoidVisitorAdapter<Void> {
         Expression clonedOriginalExpr = new EnclosedExpr(originalExpr.clone());
         clonedOriginalExpr.setParentNode(null);
         if (!originalExpr.getParentNode().isPresent()) {
-            System.out.println("ERROR");
+            throw new IllegalStateException("Original expression has no parent");
         }
         Expression repl = new ConditionalExpr(new EnclosedExpr(mutationCondition), mutatedExpr, clonedOriginalExpr);
         repl = new EnclosedExpr(repl);
@@ -142,7 +140,7 @@ public class Mutator extends VoidVisitorAdapter<Void> {
         signature = null;
         parameters = null;
         int midNew = mid;
-        System.out.println("MUTATED " + (midNew - midOld) + " mutants for method " + n.getName());
+        System.out.println("    Mutated " + (midNew - midOld) + " mutants for method " + n.getName());
     }
 
     @Override
@@ -150,15 +148,9 @@ public class Mutator extends VoidVisitorAdapter<Void> {
         // The fact that we are visiting means that there is no enclosing
         // expression that has already been mutated.
 
-        System.out.println("MUTATING: " + n.toString());
         Properties ps = n.accept(epv, null);
-        if (ps != null) {
-            System.out.println("  PROPERTIES:" + ps.summarizeProperties());
-            System.out.println("  CAN MUTATE? " + ps.canMutate());
-        }
 
         if (ps == null || !ps.canMutate()) {
-            System.out.println("  Recursively visiting children");
             super.visit(n, arg);
             return;
         }
@@ -167,10 +159,8 @@ public class Mutator extends VoidVisitorAdapter<Void> {
 
         List<Expression> relations = new ArrayList<>();
         n.accept(rv, relations);
-        System.out.println(relations);
 
         for (Expression r : relations) {
-            System.out.println("  TARGETING MUTATION CONDITION: " + r);
             addMutantFromCondition(n, r);
         }
     }
