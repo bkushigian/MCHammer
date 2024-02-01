@@ -15,17 +15,14 @@ public class NameVisitor extends VoidVisitorAdapter<NameVisitor.UsedNames> {
         Set<SimpleName> usedSimpleNames = new HashSet<>();
     }
 
-
     public void visit(Name n, UsedNames arg) {
-        System.out.println("Name: " + n);
         arg.usedNames.add(n);
         super.visit(n, arg);
     }
 
     public void visit(NameExpr n, UsedNames arg) {
-        System.out.println("NameExpr: " + n);
         arg.usedSimpleNames.add(n.getName());
         super.visit(n, arg);
     }
-    
+
 }
