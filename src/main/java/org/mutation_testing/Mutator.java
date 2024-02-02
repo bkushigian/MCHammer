@@ -1,7 +1,9 @@
 package org.mutation_testing;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.mutation_testing.ExpressionPropertyVisitor.Properties;
 
@@ -127,6 +129,7 @@ public class Mutator extends VoidVisitorAdapter<Void> {
 
     protected Signature signature;
     NodeList<Parameter> parameters;
+    Map<Expression, List<Expression>> store;
 
     @Override
     public void visit(MethodDeclaration n, Void arg) {
@@ -135,10 +138,12 @@ public class Mutator extends VoidVisitorAdapter<Void> {
         }
         signature = n.getSignature();
         parameters = n.getParameters();
+        store = new HashMap<>();
         int midOld = mid;
         super.visit(n, arg);
         signature = null;
         parameters = null;
+        store = null;
         int midNew = mid;
         System.out.println("    Mutated " + (midNew - midOld) + " mutants for method " + n.getName());
     }
@@ -157,10 +162,11 @@ public class Mutator extends VoidVisitorAdapter<Void> {
         assert ps.isPure;
         assert !ps.hasUnhandledProperties;
 
-        List<Expression> relations = new ArrayList<>();
+        List<BinaryExpr> relations = new ArrayList<>();
         n.accept(rv, relations);
 
         for (Expression r : relations) {
+
             addMutantFromCondition(n, r);
         }
     }

@@ -3,21 +3,16 @@ package org.mutation_testing;
 import java.util.List;
 
 import com.github.javaparser.ast.expr.BinaryExpr;
-import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
 /**
  * A visitor to collect all relations within a tree.
  */
-public class RelationalVisitor extends VoidVisitorAdapter<List<Expression>> {
+public class RelationalVisitor extends VoidVisitorAdapter<List<BinaryExpr>> {
     String currentMethod = null;
 
-    protected boolean isTerminal(Expression e) {
-        return e.isNameExpr() || e.isLiteralExpr();
-    }
-
     @Override
-    public void visit(BinaryExpr n, List<Expression> arg) {
+    public void visit(BinaryExpr n, List<BinaryExpr> arg) {
         switch (n.getOperator()) {
             case EQUALS:
             case NOT_EQUALS:

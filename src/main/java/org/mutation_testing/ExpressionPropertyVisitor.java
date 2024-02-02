@@ -3,6 +3,7 @@ package org.mutation_testing;
 import java.util.StringJoiner;
 
 import com.github.javaparser.ast.expr.BinaryExpr;
+import com.github.javaparser.ast.expr.BinaryExpr.Operator;
 import com.github.javaparser.ast.expr.BooleanLiteralExpr;
 import com.github.javaparser.ast.expr.CharLiteralExpr;
 import com.github.javaparser.ast.expr.DoubleLiteralExpr;
@@ -50,6 +51,7 @@ public class ExpressionPropertyVisitor extends GenericVisitorAdapter<ExpressionP
         boolean isSimplePredicate = false;
         boolean isSimpleLogical = false;
         boolean isName = false;
+        boolean isSimpleName = false;
         boolean isLiteral = false;
         boolean isPure = false;
 
@@ -60,7 +62,19 @@ public class ExpressionPropertyVisitor extends GenericVisitorAdapter<ExpressionP
         }
 
         boolean isTerminal() {
-            return isName || isLiteral;
+            return isName || isSimpleName || isLiteral;
+        }
+
+        boolean isName() {
+            return isName;
+        }
+
+        boolean isSimpleName() {
+            return isSimpleName;
+        }
+
+        boolean isLiteral() {
+            return isLiteral;
         }
 
         static Properties literal() {
@@ -77,6 +91,13 @@ public class ExpressionPropertyVisitor extends GenericVisitorAdapter<ExpressionP
             return p;
         }
 
+        static Properties simpleName() {
+            Properties p = new Properties();
+            p.isSimpleName = true;
+            p.isPure = true;
+            return p;
+        }
+
         static Properties unhandled() {
             Properties p = new Properties();
             p.hasUnhandledProperties = true;
@@ -87,8 +108,8 @@ public class ExpressionPropertyVisitor extends GenericVisitorAdapter<ExpressionP
         public String toString() {
             return "Properties [isSimpleRelational=" + isSimpleRelational + ", isSimpleArithmetic=" + isSimpleArithmetic
                     + ", isSimplePredicate=" + isSimplePredicate + ", isSimpleLogical=" + isSimpleLogical + ", isName="
-                    + isName + ", isLiteral=" + isLiteral + ", hasUnhandledProperties=" + hasUnhandledProperties +
-                    ", isPure=" + isPure + "]";
+                    + isName + ", isSimpleName=" + isSimpleName + ", isLiteral=" + isLiteral
+                    + ", hasUnhandledProperties=" + hasUnhandledProperties + ", isPure=" + isPure + "]";
         }
 
         public String summarizeProperties() {
@@ -103,6 +124,8 @@ public class ExpressionPropertyVisitor extends GenericVisitorAdapter<ExpressionP
                 sj.add("Simple Predicate");
             } else if (isName) {
                 sj.add("Name");
+            } else if (isSimpleName) {
+                sj.add("SimpleName");
             } else if (isLiteral) {
                 sj.add("Literal");
             } else if (hasUnhandledProperties) {
@@ -112,6 +135,80 @@ public class ExpressionPropertyVisitor extends GenericVisitorAdapter<ExpressionP
             return sj.toString();
 
         }
+    }
+
+    boolean opIsRelational(BinaryExpr.Operator op) {
+        switch (op) {
+            case EQUALS:
+            case NOT_EQUALS:
+            case GREATER:
+            case GREATER_EQUALS:
+            case LESS:
+            case LESS_EQUALS:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    boolean opIsArithmetic(BinaryExpr.Operator op) {
+        switch (op) {
+            case PLUS:
+            case MINUS:
+            case MULTIPLY:
+            case DIVIDE:
+            case REMAINDER:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    boolean opIsLogical(BinaryExpr.Operator op) {
+        switch (op) {
+            case AND:
+            case OR:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    boolean opIsBitwise(BinaryExpr.Operator op) {
+        switch (op) {
+            case BINARY_AND:
+            case BINARY_OR:
+            case XOR:
+            case LEFT_SHIFT:
+            case SIGNED_RIGHT_SHIFT:
+            case UNSIGNED_RIGHT_SHIFT:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    Properties combineProperties(Operator op, Properties left, Properties right) {
+        Properties p = new Properties();
+        p.hasUnhandledProperties = left.hasUnhandledProperties || right.hasUnhandledProperties;
+        p.isPure = left.isPure && right.isPure;
+        if (p.hasUnhandledProperties) {
+            return p;
+        }
+
+        if (opIsRelational(op)) {
+            p.isSimpleRelational = left.isSimpleName() && right.isLiteral() || left.isLiteral() && right.isSimpleName();
+            p.isSimplePredicate = p.isSimpleRelational;
+        } else if (opIsArithmetic(op)) {
+            p.isSimpleArithmetic = (left.isTerminal() || left.isSimpleArithmetic)
+                    && (right.isTerminal() || right.isSimpleArithmetic);
+        } else if (opIsLogical(op)) {
+            p.isSimpleLogical = (left.isSimpleLogical || left.isSimplePredicate)
+                    && (right.isSimpleLogical || right.isSimplePredicate);
+        } else {
+            p.hasUnhandledProperties = true;
+        }
+        return p;
     }
 
     @Override
@@ -129,78 +226,54 @@ public class ExpressionPropertyVisitor extends GenericVisitorAdapter<ExpressionP
         if (right == null) {
             right = Properties.unhandled();
         }
+        return combineProperties(n.getOperator(), left, right);
+    }
 
+    boolean isIncDec(UnaryExpr.Operator op) {
+        switch (op) {
+            case POSTFIX_DECREMENT:
+            case POSTFIX_INCREMENT:
+            case PREFIX_DECREMENT:
+            case PREFIX_INCREMENT:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    boolean isLogicalNot(UnaryExpr.Operator op) {
+        return op == UnaryExpr.Operator.LOGICAL_COMPLEMENT;
+    }
+
+    boolean isArithmeticUnary(UnaryExpr.Operator op) {
+        return op == UnaryExpr.Operator.MINUS || op == UnaryExpr.Operator.PLUS;
+    }
+
+    Properties combineProperties(UnaryExpr.Operator op, Properties operand) {
         Properties p = new Properties();
-        p.hasUnhandledProperties = left.hasUnhandledProperties || right.hasUnhandledProperties;
-        p.isPure = left.isPure && right.isPure;
-
+        p.hasUnhandledProperties = operand.hasUnhandledProperties;
+        p.isPure = operand.isPure;
         if (p.hasUnhandledProperties) {
             return p;
         }
 
-        switch (n.getOperator()) {
-            case EQUALS:
-            case NOT_EQUALS:
-            case GREATER:
-            case GREATER_EQUALS:
-            case LESS:
-            case LESS_EQUALS:
-                p.isSimpleRelational = left.isTerminal() && right.isTerminal() && left.isPure && right.isPure;
-                p.isSimplePredicate = p.isSimpleRelational;
-                break;
-            case AND:
-            case OR:
-                p.isSimpleLogical = (left.isSimpleLogical || left.isSimplePredicate)
-                        && (right.isSimpleLogical || right.isSimplePredicate) && left.isPure && right.isPure;
-                break;
-            case PLUS:
-            case MINUS:
-            case MULTIPLY:
-            case DIVIDE:
-            case REMAINDER:
-                p.isSimpleArithmetic = (left.isTerminal() || left.isSimpleArithmetic)
-                        && (right.isTerminal() || right.isSimpleArithmetic);
-                break;
-            case BINARY_AND:
-            case BINARY_OR:
-            case XOR:
-            case LEFT_SHIFT:
-            case SIGNED_RIGHT_SHIFT:
-            case UNSIGNED_RIGHT_SHIFT:
-            default:
-                break;
+        if (isIncDec(op)) {
+            p.isPure = false;
+            p.hasUnhandledProperties = true;
+        } else if (isLogicalNot(op)) {
+            p.isSimpleLogical = operand.isSimplePredicate;
+        } else if (isArithmeticUnary(op)) {
+            p.isSimpleArithmetic = operand.isPure && (operand.isTerminal() || operand.isSimpleArithmetic);
+        } else {
+            p.hasUnhandledProperties = true;
         }
         return p;
     }
 
     @Override
     public Properties visit(UnaryExpr n, Void arg) {
-        Properties rand;
-        rand = n.getExpression().accept(this, arg);
-        Properties p = new Properties();
-        p.hasUnhandledProperties = rand.hasUnhandledProperties;
-        p.isPure = rand.isPure;
-        switch (n.getOperator()) {
-            case LOGICAL_COMPLEMENT:
-
-            case MINUS:
-            case PLUS:
-                p.isSimpleArithmetic = rand.isPure && (rand.isTerminal() || rand.isSimpleArithmetic);
-                p.isPure = rand.isPure;
-                break;
-            case POSTFIX_DECREMENT:
-            case POSTFIX_INCREMENT:
-            case PREFIX_DECREMENT:
-            case PREFIX_INCREMENT:
-                p.isPure = false;
-                p.hasUnhandledProperties = true;
-                break;
-            case BITWISE_COMPLEMENT:
-            default:
-                p.hasUnhandledProperties = true;
-                break;
-        }
-        return p;
+        Properties rand = n.getExpression().accept(this, arg);
+        return combineProperties(n.getOperator(), rand);
     }
 
     /// All literals
@@ -253,12 +326,6 @@ public class ExpressionPropertyVisitor extends GenericVisitorAdapter<ExpressionP
 
     @Override
     public Properties visit(NameExpr n, Void arg) {
-        return Properties.name();
+        return Properties.simpleName();
     }
-
-    @Override
-    public Properties visit(SimpleName n, Void arg) {
-        return Properties.name();
-    }
-
 }
