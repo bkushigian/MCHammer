@@ -56,7 +56,7 @@ public class ExpressionPropertyVisitor extends GenericVisitorAdapter<ExpressionP
         boolean hasUnhandledProperties = false;
 
         boolean canMutate() {
-            return isSimpleRelational || isSimpleArithmetic || isSimplePredicate || isSimpleLogical;
+            return isSimpleRelational || isSimplePredicate || isSimpleLogical;
         }
 
         boolean isTerminal() {
@@ -97,15 +97,15 @@ public class ExpressionPropertyVisitor extends GenericVisitorAdapter<ExpressionP
                 sj.add("Simple Logical");
             } else if (isSimpleRelational) {
                 sj.add("Simple Relational");
-            } else if (isSimpleArithmetic){
+            } else if (isSimpleArithmetic) {
                 sj.add("Simple Arithmetic");
-            } else if (isSimplePredicate){
+            } else if (isSimplePredicate) {
                 sj.add("Simple Predicate");
-            } else if (isName){
+            } else if (isName) {
                 sj.add("Name");
-            } else if (isLiteral){
+            } else if (isLiteral) {
                 sj.add("Literal");
-            } else if (hasUnhandledProperties){
+            } else if (hasUnhandledProperties) {
                 sj.add("Unhandled");
             }
 
