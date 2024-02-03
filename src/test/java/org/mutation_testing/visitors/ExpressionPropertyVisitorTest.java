@@ -3,8 +3,6 @@ package org.mutation_testing.visitors;
 import static org.junit.Assert.*;
 import static org.mutation_testing.visitors.ExpressionPropertyVisitor.Properties;
 
-import org.mutation_testing.visitors.ExpressionPropertyVisitor;
-
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.expr.Expression;
 

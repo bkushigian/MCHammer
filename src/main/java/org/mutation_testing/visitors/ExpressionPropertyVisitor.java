@@ -12,7 +12,6 @@ import com.github.javaparser.ast.expr.LongLiteralExpr;
 import com.github.javaparser.ast.expr.Name;
 import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.expr.NullLiteralExpr;
-import com.github.javaparser.ast.expr.SimpleName;
 import com.github.javaparser.ast.expr.StringLiteralExpr;
 import com.github.javaparser.ast.expr.TextBlockLiteralExpr;
 import com.github.javaparser.ast.expr.UnaryExpr;

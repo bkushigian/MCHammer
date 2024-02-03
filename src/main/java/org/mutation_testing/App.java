@@ -8,9 +8,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.symbolsolver.*;
-
 /**
  * Hello world!
  *
