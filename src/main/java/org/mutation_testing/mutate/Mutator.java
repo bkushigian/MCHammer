@@ -170,5 +170,9 @@ public class Mutator extends VoidVisitorAdapter<Void> {
         List<Relation> relations = new ArrayList<>();
         n.accept(rv, relations);
         Store store = new Store(relations);
+        List<Expression> product = store.getProductConditions();
+        for (Expression condition : product) {
+            addMutantFromCondition(n, condition);
+        }
     }
 }
