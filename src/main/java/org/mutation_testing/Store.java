@@ -5,7 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.mutation_testing.relation.ExprExprRelation;
+import org.mutation_testing.relation.ExprLiteralRelation;
+import org.mutation_testing.relation.ExprNameRelation;
+import org.mutation_testing.relation.LiteralLiteralRelation;
 import org.mutation_testing.relation.NameLiteralRelation;
+import org.mutation_testing.relation.NameNameRelation;
 import org.mutation_testing.relation.Relation;
 
 import com.github.javaparser.ast.expr.BinaryExpr;
@@ -111,6 +116,26 @@ public class Store {
         }
 
         return state;
+    }
+
+    void addToStore(NameNameRelation relation) {
+        throw new NotImplementedException("addToStore(NameNameRelation) not implemented");
+    }
+
+    void addToStore(ExprNameRelation relation) {
+        throw new NotImplementedException("addToStore(ExprNameRelation) not implemented");
+    }
+
+    void addToStore(LiteralLiteralRelation relation) {
+        // Do nothing
+    }
+
+    void addToStore(ExprLiteralRelation relation) {
+        throw new NotImplementedException("addToStore(ExprLiteralRelation) not implemented");
+    }
+
+    void addToStore(ExprExprRelation relation) {
+        throw new NotImplementedException("addToStore(ExprExprRelation) not implemented");
     }
 
     void processRelation(Relation relation) {
