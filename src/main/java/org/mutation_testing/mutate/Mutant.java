@@ -1,4 +1,4 @@
-package org.mutation_testing;
+package org.mutation_testing.mutate;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -6,14 +6,32 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.StringJoiner;
 
+import org.mutation_testing.Source;
+
 import com.github.javaparser.Position;
 import com.github.javaparser.ast.Node;
 
 public class Mutant {
-    int mid;
-    Node origNode;
-    Node replNode;
-    Source source;
+    protected int mid;
+    protected Node origNode;
+    protected Node replNode;
+    protected Source source;
+
+    public int getMid() {
+        return mid;
+    }
+
+    public Node getOrigNode() {
+        return origNode;
+    }
+
+    public Node getReplNode() {
+        return replNode;
+    }
+
+    public Source getSource() {
+        return source;
+    }
 
     public Mutant(int mid, Source source, Node originalNode, Node replNode) {
         this.mid = mid;
@@ -24,12 +42,16 @@ public class Mutant {
 
     public String asFileString() {
         String[] lines = source.getLines();
+        Position begin;
+        Position end;
 
-        if (!origNode.getBegin().isPresent() || !origNode.getEnd().isPresent()) {
+        if (origNode.getBegin().isPresent() && origNode.getEnd().isPresent()) {
+            begin = origNode.getBegin().get();
+            end = origNode.getEnd().get();
+        } else {
             throw new IllegalStateException("Node has no begin or end position:" + origNode);
         }
-        Position begin = origNode.getBegin().get();
-        Position end = origNode.getEnd().get();
+
         int beginLine = begin.line - 1;
         int beginColumn = begin.column - 1;
         int endLine = end.line - 1;

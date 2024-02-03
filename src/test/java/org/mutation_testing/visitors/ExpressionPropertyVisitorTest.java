@@ -1,10 +1,10 @@
-package org.mutation_testing;
+package org.mutation_testing.visitors;
 
 import static org.junit.Assert.*;
+import static org.mutation_testing.visitors.ExpressionPropertyVisitor.Properties;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.expr.Expression;
-import static org.mutation_testing.ExpressionPropertyVisitor.Properties;
 
 public class ExpressionPropertyVisitorTest {
 

@@ -1,9 +1,14 @@
-package org.mutation_testing;
+package org.mutation_testing.state;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import com.github.javaparser.ast.expr.BinaryExpr;
+import com.github.javaparser.ast.expr.EnclosedExpr;
 import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.LongLiteralExpr;
+import com.github.javaparser.ast.expr.NameExpr;
+import com.github.javaparser.ast.expr.SimpleName;
 
 public class PuncturedIntervals implements AbstractStates {
 
@@ -43,43 +48,30 @@ public class PuncturedIntervals implements AbstractStates {
 
     @Override
     public List<Expression> asConditions(Expression expr) {
-        throw new NotImplementedException();
+        List<Expression> conditions = new ArrayList<>();
+        for (PuncturedIntervals.Interval interval : intervals) {
+            conditions.addAll(interval.asConditions(expr));
+        }
+
+        return conditions;
     }
 
     @Override
     public List<String> asStringConditions(String variableName) {
-        List<String> conditions = new ArrayList<>();
-
-        for (PuncturedIntervals.Interval interval : intervals) {
-            StringBuilder sb = new StringBuilder();
-            // Check for singleton point
-            if (interval.lowerBound.equals(interval.upperBound)
-                    && !interval.punctures.contains(interval.lowerBound)) {
-                sb.append(variableName).append(" == ").append(interval.lowerBound);
-                conditions.add(sb.toString());
-            } else {
-                // The general case
-                if (interval.lowerBound != Long.MIN_VALUE) {
-                    sb.append(interval.lowerBound).append(" <= ").append(variableName);
-                }
-                if (interval.upperBound != Long.MAX_VALUE) {
-                    if (sb.length() > 0) {
-                        sb.append(" && ");
-                    }
-                    sb.append(variableName).append(" <= ").append(interval.upperBound);
-                }
-                for (Long puncture : interval.punctures) {
-                    sb.append(" && ").append(variableName).append(" != ").append(puncture);
-                }
-                conditions.add(sb.toString()); // Add main interval case
-
-                // Now, each puncture
-                for (Long puncture : interval.punctures) {
-                    conditions.add(variableName + " == " + puncture);
-                }
-            }
+        List<String> stringConditions = new ArrayList<>();
+        List<Expression> conditions = asConditions(new NameExpr(new SimpleName(variableName)));
+        for (Expression condition : conditions) {
+            stringConditions.add(condition.toString());
         }
-        return conditions;
+        return stringConditions;
+    }
+
+    public int numAbstractValues() {
+        int numValues = 0;
+        for (PuncturedIntervals.Interval interval : intervals) {
+            numValues += interval.numAbstractValues();
+        }
+        return numValues;
     }
 
     public static class Interval {
@@ -96,6 +88,101 @@ public class PuncturedIntervals implements AbstractStates {
             this.upperBound = upperBound;
             this.punctures = new ArrayList<>();
             puncture(punctures);
+        }
+
+        public int numAbstractValues() {
+            if (lowerBound.equals(upperBound)) {
+                return 1;
+            }
+            if (punctures.isEmpty()) {
+                return 1;
+            }
+            if (upperBound - lowerBound + 1 == punctures.size()) {
+                return punctures.size();
+            }
+            return 1 + punctures.size();
+        }
+
+        private Expression and(Expression maybeNull, Expression cond2) {
+            if (maybeNull == null) {
+                return cond2;
+            }
+            return new BinaryExpr(maybeNull, cond2, BinaryExpr.Operator.AND);
+        }
+
+        private Expression lb(Expression boundExpr, Long bound) {
+            return new BinaryExpr(boundExpr, new LongLiteralExpr(bound.toString()),
+                    BinaryExpr.Operator.GREATER_EQUALS);
+        }
+
+        private Expression ub(Expression boundExpr, Long bound) {
+            return new BinaryExpr(boundExpr, new LongLiteralExpr(bound.toString()), BinaryExpr.Operator.LESS_EQUALS);
+        }
+
+        private BinaryExpr ne(Expression expr, Long puncture) {
+            return new BinaryExpr(expr, new LongLiteralExpr(puncture.toString()), BinaryExpr.Operator.NOT_EQUALS);
+        }
+
+        private BinaryExpr eq(Expression expr, Long puncture) {
+            return new BinaryExpr(expr, new LongLiteralExpr(puncture.toString()), BinaryExpr.Operator.EQUALS);
+        }
+
+        private EnclosedExpr enclose(Expression expr) {
+            return new EnclosedExpr(expr);
+        }
+
+        /**
+         * Make a condition that the variable is within the bounds and is not
+         * one of the puncture points. If all points within this interval are punctured,
+         * return null
+         * 
+         * @param expr the expr to check the condition against
+         * @return the condition, if it exists, or else null
+         */
+        private Expression makeIntervalCondition(Expression expr) {
+            Expression cond = null;
+            if (lowerBound.equals(upperBound)) {
+                return eq(expr, lowerBound);
+            } else if (lowerBound + punctures.size() < upperBound) {
+                if (lowerBound != Long.MIN_VALUE) {
+                    cond = and(cond, lb(expr, lowerBound));
+                }
+                if (upperBound != Long.MAX_VALUE) {
+                    cond = and(cond, ub(expr, upperBound));
+                }
+                // Now remove puncture points from this interval
+                for (Long puncture : punctures) {
+                    cond = and(cond, ne(expr, puncture));
+                }
+                return cond;
+            }
+            // Now, add puncture points
+            for (Long puncture : punctures) {
+                cond = and(cond, eq(expr, puncture));
+            }
+
+            return cond;
+        }
+
+        public List<Expression> asConditions(Expression expr) {
+            List<Expression> conditions = new ArrayList<>();
+            // The general case
+            //
+            // First, get the "full interval" condition: that is, get a condition
+            // that says "expr is within the bounds of this interval and is
+            // not a puncture point".
+            Expression cond = makeIntervalCondition(expr);
+            if (cond != null) {
+                conditions.add(cond);
+            }
+            // Now add the individual puncture points. Skip this for singleton
+            // intervals (lowerBound == upperBound)
+            if (lowerBound != upperBound) {
+                for (Long puncture : punctures) {
+                    conditions.add(eq(expr, puncture));
+                }
+            }
+            return conditions;
         }
 
         public Interval(Long lowerBound, Long upperBound) {
@@ -202,6 +289,11 @@ public class PuncturedIntervals implements AbstractStates {
             } else if (!punctures.equals(other.punctures))
                 return false;
             return true;
+        }
+
+        @Override
+        public String toString() {
+            return "Interval [lowerBound=" + lowerBound + ", upperBound=" + upperBound + ", punctures=" + punctures + "]";
         }
 
     }
