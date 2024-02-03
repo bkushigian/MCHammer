@@ -31,25 +31,27 @@ public class App {
         String outdir = "msav_out";
         String mutantsLog = "mutants.msav.log";
         List<String> filenames = new ArrayList<>();
-        for (int i = 0; i < args.length; ++i) {
-            if ("--outdir".equals(args[i])) {
-                i += 1;
-                if (i >= args.length) {
+
+        int argIndex = 0;
+        while (argIndex < args.length) {
+            if ("--outdir".equals(args[argIndex])) {
+                argIndex += 1;
+                if (argIndex >= args.length) {
                     System.err.println("Missing argument for --outdir");
                     System.exit(1);
                 }
-                outdir = args[i];
-                continue;
-            } else if ("--log".equals(args[i])) {
-                i += 1;
-                if (i >= args.length) {
+                outdir = args[argIndex];
+            } else if ("--log".equals(args[argIndex])) {
+                argIndex += 1;
+                if (argIndex >= args.length) {
                     System.err.println("Missing argument for --log");
                     System.exit(1);
                 }
-                mutantsLog = args[i];
-                continue;
+                mutantsLog = args[argIndex];
+            } else {
+                filenames.add(args[argIndex]);
             }
-            filenames.add(args[i]);
+            argIndex += 1;
         }
 
         App app = new App(filenames, outdir, mutantsLog);
