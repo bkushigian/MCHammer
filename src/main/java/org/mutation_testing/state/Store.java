@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 import org.mutation_testing.NotImplementedException;
 import org.mutation_testing.relation.ExprExprRelation;
@@ -18,6 +19,7 @@ import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.type.PrimitiveType;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.LiteralExpr;
+import com.github.javaparser.ast.expr.NameExpr;
 
 /**
  * This stores abstract values for parameters, fields, local variables, etc
@@ -72,6 +74,82 @@ public class Store {
         for (Relation relation : relations) {
             addRelation(relation);
         }
+    }
+
+    private void productHelper(List<List<Expression>> conds,
+            int condIndex,
+            List<Expression> builtSoFar,
+            List<Expression> result) {
+        List<Expression> current = conds.get(condIndex);
+
+    }
+
+    List<Expression> productOfConditions(List<List<Expression>> conditions) {
+        if (conditions.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        int numConditions = conditions.size();
+        int[] indices = new int[numConditions];
+        int[] sizes = new int[numConditions];
+        int totalSize = 1;
+        for (int i = 0; i < numConditions; i++) {
+            sizes[i] = conditions.get(i).size();
+            totalSize *= sizes[i];
+        }
+
+        List<Expression> product = new ArrayList<>(totalSize);
+        for (int i = 0; i < totalSize; i++) {
+            List<Expression> condition = new ArrayList<>(numConditions);
+            for (int j = 0; j < numConditions; j++) {
+                condition.add(conditions.get(j).get(indices[j]));
+            }
+            product.add(BinaryExpr.and(condition));
+            for (int j = 0; j < numConditions; j++) {
+                indices[j] += 1;
+                if (indices[j] < sizes[j]) {
+                    break;
+                }
+                indices[j] = 0;
+            }
+        }
+
+        return product;
+    }
+
+    List<Expression> asProductConditions() {
+        if (!fieldStore.isEmpty()) {
+            throw new NotImplementedException("asProductConditions() not implemented for fields");
+        }
+        if (!miscStore.isEmpty()) {
+            throw new NotImplementedException("asProductConditions() not implemented for miscStore");
+        }
+
+        int numLocalVars = localStore.size();
+        int abstractValueProductSize = 1;
+        System.out.println("Number of Local Variables: " + numLocalVars);
+
+        List<List<Expression>> conditionsToProduct = new ArrayList<>();
+
+        for (Map.Entry<String, StoreState> e : localStore.entrySet()) {
+            String ident = e.getKey();
+            NameExpr name = new NameExpr(ident);
+            int numAbstractValues = e.getValue().intervals.numAbstractValues();
+            abstractValueProductSize *= numAbstractValues;
+            System.out.println("Number of Abstract Values for " + e.getKey() + ": " + numAbstractValues);
+            conditionsToProduct.add(e.getValue().intervals.asConditions(name));
+        }
+
+        System.out.println("Abstract Value Product Size: " + abstractValueProductSize);
+
+        List<Expression> conditions = new ArrayList<>();
+
+        Stack<Integer> stack = new Stack<>();
+        while (true) {
+
+        }
+
+        return conditions;
     }
 
     static final int UNKNOWN = 0;
