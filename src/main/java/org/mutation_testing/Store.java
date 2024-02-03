@@ -141,8 +141,18 @@ public class Store {
     void processRelation(Relation relation) {
         if (relation.isNameLiteralRelation()) {
             addToStore(relation.asNameLiteralRelation());
+        } else if (relation.isNameNameRelation()) {
+            addToStore(relation.asNameNameRelation());
+        } else if (relation.isExprNameRelation()) {
+            addToStore(relation.asExprNameRelation());
+        } else if (relation.isLiteralLiteralRelation()) {
+            addToStore(relation.asLiteralLiteralRelation());
+        } else if (relation.isExprLiteralRelation()) {
+            addToStore(relation.asExprLiteralRelation());
+        } else if (relation.isExprExprRelation()) {
+            addToStore(relation.asExprExprRelation());
         } else {
-            throw new IllegalArgumentException("Unsupported relation type: " + relation.getClass().getName());
+            throw new IllegalArgumentException("Unknown relation type: " + relation);
         }
         
     }
