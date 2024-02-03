@@ -1,4 +1,4 @@
-package org.mutation_testing;
+package org.mutation_testing.mutate;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -6,14 +6,32 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.StringJoiner;
 
+import org.mutation_testing.Source;
+
 import com.github.javaparser.Position;
 import com.github.javaparser.ast.Node;
 
 public class Mutant {
-    int mid;
-    Node origNode;
-    Node replNode;
-    Source source;
+    protected int mid;
+    protected Node origNode;
+    protected Node replNode;
+    protected Source source;
+
+    public int getMid() {
+        return mid;
+    }
+
+    public Node getOrigNode() {
+        return origNode;
+    }
+
+    public Node getReplNode() {
+        return replNode;
+    }
+
+    public Source getSource() {
+        return source;
+    }
 
     public Mutant(int mid, Source source, Node originalNode, Node replNode) {
         this.mid = mid;

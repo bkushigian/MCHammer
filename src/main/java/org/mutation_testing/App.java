@@ -8,6 +8,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.mutation_testing.mutate.Mutant;
+import org.mutation_testing.mutate.Mutator;
+
 /**
  * Hello world!
  *
@@ -86,7 +89,7 @@ public class App {
         Mutant.writeMutantsLog(mutantsLog, mutants);
 
         for (Mutant mutant : mutants) {
-            Path d = mutantsDir.resolve(mutant.mid + "");
+            Path d = mutantsDir.resolve(mutant.getMid() + "");
             if (Files.exists(d)) {
                 delete(d.toFile());
             }
@@ -98,7 +101,7 @@ public class App {
                 return;
             }
             String mutantFileContents = mutant.asFileString();
-            Path mutantFilename = Paths.get(mutant.source.getFilename()).getFileName();
+            Path mutantFilename = Paths.get(mutant.getSource().getFilename()).getFileName();
             // Create a new file for the mutant
             Path mutantFilePath = d.resolve(mutantFilename);
             try {
