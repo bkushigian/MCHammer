@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 
 import org.mutation_testing.NotImplementedException;
 import org.mutation_testing.relation.ExprExprRelation;
@@ -16,6 +15,7 @@ import org.mutation_testing.relation.NameNameRelation;
 import org.mutation_testing.relation.Relation;
 
 import com.github.javaparser.ast.expr.BinaryExpr;
+import com.github.javaparser.ast.expr.EnclosedExpr;
 import com.github.javaparser.ast.type.PrimitiveType;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.LiteralExpr;
@@ -76,48 +76,66 @@ public class Store {
         }
     }
 
-    private void productHelper(List<List<Expression>> conds,
-            int condIndex,
-            List<Expression> builtSoFar,
-            List<Expression> result) {
-        List<Expression> current = conds.get(condIndex);
-
+    private Expression enclose(Expression expr) {
+        return new EnclosedExpr(expr);
     }
 
-    List<Expression> productOfConditions(List<List<Expression>> conditions) {
-        if (conditions.isEmpty()) {
-            return new ArrayList<>();
+    private Expression and(Expression maybeNull, Expression cond2) {
+        if (maybeNull == null) {
+            return cond2;
         }
 
-        int numConditions = conditions.size();
-        int[] indices = new int[numConditions];
-        int[] sizes = new int[numConditions];
+        // Enclose other expressions that have lower precedence. This includes:
+        // - OR binary operators
+        // - Ternary conditional operators
+        // - Assignment operators
+        if (maybeNull.isBinaryExpr() && maybeNull.asBinaryExpr().getOperator() == BinaryExpr.Operator.OR) {
+            maybeNull = enclose(maybeNull);
+        } else if (maybeNull.isConditionalExpr()) {
+            maybeNull = enclose(maybeNull);
+        } else if (maybeNull.isAssignExpr()) {
+            maybeNull = enclose(maybeNull);
+        }
+
+        return new BinaryExpr(maybeNull, cond2, BinaryExpr.Operator.AND);
+    }
+
+    private void incrementIndices(int[] indices, int[] sizes) {
+        for (int i = 0; i < indices.length; i++) {
+            indices[i] += 1;
+            if (indices[i] < sizes[i]) {
+                break;
+            }
+            indices[i] = 0;
+        }
+    }
+
+    private List<Expression> conditionProductHelper(List<List<Expression>> abstractValueConditions) {
+        int[] indices = new int[abstractValueConditions.size()];  // Track the current index for each list of conditions
+        int[] sizes = new int[abstractValueConditions.size()];    // Track the size of each list of conditions
         int totalSize = 1;
-        for (int i = 0; i < numConditions; i++) {
-            sizes[i] = conditions.get(i).size();
+
+        for (int i = 0; i < abstractValueConditions.size(); i++) {
+            sizes[i] = abstractValueConditions.get(i).size();
             totalSize *= sizes[i];
         }
 
-        List<Expression> product = new ArrayList<>(totalSize);
+        List<Expression> product = new ArrayList<>();
+
         for (int i = 0; i < totalSize; i++) {
-            List<Expression> condition = new ArrayList<>(numConditions);
-            for (int j = 0; j < numConditions; j++) {
-                condition.add(conditions.get(j).get(indices[j]));
+            Expression thisCondition = null;
+
+            for (int j = 0; j < abstractValueConditions.size(); j++) {
+                thisCondition = and(thisCondition, abstractValueConditions.get(j).get(indices[j]));
             }
-            product.add(BinaryExpr.and(condition));
-            for (int j = 0; j < numConditions; j++) {
-                indices[j] += 1;
-                if (indices[j] < sizes[j]) {
-                    break;
-                }
-                indices[j] = 0;
-            }
+            product.add(thisCondition);
+            incrementIndices(indices, sizes);
         }
 
         return product;
     }
 
-    List<Expression> asProductConditions() {
+    public List<Expression> getProductConditions() {
         if (!fieldStore.isEmpty()) {
             throw new NotImplementedException("asProductConditions() not implemented for fields");
         }
@@ -125,31 +143,18 @@ public class Store {
             throw new NotImplementedException("asProductConditions() not implemented for miscStore");
         }
 
-        int numLocalVars = localStore.size();
-        int abstractValueProductSize = 1;
-        System.out.println("Number of Local Variables: " + numLocalVars);
-
         List<List<Expression>> conditionsToProduct = new ArrayList<>();
 
         for (Map.Entry<String, StoreState> e : localStore.entrySet()) {
             String ident = e.getKey();
             NameExpr name = new NameExpr(ident);
-            int numAbstractValues = e.getValue().intervals.numAbstractValues();
-            abstractValueProductSize *= numAbstractValues;
-            System.out.println("Number of Abstract Values for " + e.getKey() + ": " + numAbstractValues);
             conditionsToProduct.add(e.getValue().intervals.asConditions(name));
         }
 
-        System.out.println("Abstract Value Product Size: " + abstractValueProductSize);
 
-        List<Expression> conditions = new ArrayList<>();
+        List<Expression> product = conditionProductHelper(conditionsToProduct);
 
-        Stack<Integer> stack = new Stack<>();
-        while (true) {
-
-        }
-
-        return conditions;
+        return product;
     }
 
     static final int UNKNOWN = 0;
@@ -178,15 +183,15 @@ public class Store {
 
         StoreState state = localStore.computeIfAbsent(ident, k -> new StoreState(type));
 
-        if (state.type != type) {
+        if (!state.type.equals(type)) {
             throw new IllegalArgumentException(
                     "Type mismatch for variable " + ident + ": " + state.type + " != " + type);
         }
 
         if (relation.isOrdered()) {
-            state.intervals.puncture(value);
-        } else {
             state.intervals.splitAt(value);
+        } else {
+            state.intervals.puncture(value);
         }
 
         return state;

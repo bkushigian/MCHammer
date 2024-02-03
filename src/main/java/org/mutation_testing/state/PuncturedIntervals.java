@@ -1,19 +1,14 @@
 package org.mutation_testing.state;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-
-import org.mutation_testing.NotImplementedException;
 
 import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.EnclosedExpr;
 import com.github.javaparser.ast.expr.Expression;
-import com.github.javaparser.ast.expr.IntegerLiteralExpr;
 import com.github.javaparser.ast.expr.LongLiteralExpr;
 import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.expr.SimpleName;
-import com.github.javaparser.ast.type.PrimitiveType;
 
 public class PuncturedIntervals implements AbstractStates {
 
@@ -146,7 +141,9 @@ public class PuncturedIntervals implements AbstractStates {
          */
         private Expression makeIntervalCondition(Expression expr) {
             Expression cond = null;
-            if (punctures.size() < upperBound - lowerBound + 1) {
+            if (lowerBound.equals(upperBound)) {
+                return eq(expr, lowerBound);
+            } else if (lowerBound + punctures.size() < upperBound) {
                 if (lowerBound != Long.MIN_VALUE) {
                     cond = and(cond, lb(expr, lowerBound));
                 }
@@ -157,39 +154,32 @@ public class PuncturedIntervals implements AbstractStates {
                 for (Long puncture : punctures) {
                     cond = and(cond, ne(expr, puncture));
                 }
-                return enclose(cond);
+                return cond;
             }
             // Now, add puncture points
             for (Long puncture : punctures) {
                 cond = and(cond, eq(expr, puncture));
             }
 
-            if (cond != null) {
-                cond = enclose(cond);
-            }
             return cond;
         }
 
         public List<Expression> asConditions(Expression expr) {
             List<Expression> conditions = new ArrayList<>();
-            // Check for a singleton point. Even if it's punctured, it's still a valid
-            // condition
-            if (lowerBound.equals(upperBound)) {
-                conditions.add(
-                        new EnclosedExpr(new BinaryExpr(expr, new IntegerLiteralExpr(lowerBound.toString()), null)));
-            } else {
-                // The general case
-                //
-                // First, get the "full interval" condition: that is, get a condition
-                // that says "expr is within the bounds of this interval and is
-                // not a puncture point".
-                Expression cond = makeIntervalCondition(expr);
-                if (cond != null) {
-                    conditions.add(cond);
-                }
-                // Now add the individual puncture points
+            // The general case
+            //
+            // First, get the "full interval" condition: that is, get a condition
+            // that says "expr is within the bounds of this interval and is
+            // not a puncture point".
+            Expression cond = makeIntervalCondition(expr);
+            if (cond != null) {
+                conditions.add(cond);
+            }
+            // Now add the individual puncture points. Skip this for singleton
+            // intervals (lowerBound == upperBound)
+            if (lowerBound != upperBound) {
                 for (Long puncture : punctures) {
-                    conditions.add(enclose(eq(expr, puncture)));
+                    conditions.add(eq(expr, puncture));
                 }
             }
             return conditions;
@@ -299,6 +289,11 @@ public class PuncturedIntervals implements AbstractStates {
             } else if (!punctures.equals(other.punctures))
                 return false;
             return true;
+        }
+
+        @Override
+        public String toString() {
+            return "Interval [lowerBound=" + lowerBound + ", upperBound=" + upperBound + ", punctures=" + punctures + "]";
         }
 
     }
