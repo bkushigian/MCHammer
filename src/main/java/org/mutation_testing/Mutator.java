@@ -166,9 +166,6 @@ public class Mutator extends VoidVisitorAdapter<Void> {
 
         List<Relation> relations = new ArrayList<>();
         n.accept(rv, relations);
-        Store store = new Store();
-
-        for (Relation r : relations) {
-        }
+        Store store = new Store(relations);
     }
 }

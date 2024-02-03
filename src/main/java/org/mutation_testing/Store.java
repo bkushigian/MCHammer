@@ -9,11 +9,9 @@ import org.mutation_testing.relation.NameLiteralRelation;
 import org.mutation_testing.relation.Relation;
 
 import com.github.javaparser.ast.expr.BinaryExpr;
-import com.github.javaparser.ast.expr.BinaryExpr.Operator;
 import com.github.javaparser.ast.type.PrimitiveType;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.LiteralExpr;
-import com.github.javaparser.ast.expr.NameExpr;
 
 /**
  * This stores abstract values for parameters, fields, local variables, etc
@@ -65,24 +63,16 @@ public class Store {
         miscStore = new HashMap<>();
     }
 
+    public Store(List<Relation> relations) {
+        this();
+        for (Relation relation : relations) {
+            processRelation(relation);
+        }
+    }
+
     static final int UNKNOWN = 0;
     static final int ORDERED = 1;
     static final int UNORDERED = 2;
-
-    private int relOpType(Operator op) {
-        switch (op) {
-            case GREATER:
-            case GREATER_EQUALS:
-            case LESS:
-            case LESS_EQUALS:
-                return ORDERED;
-            case EQUALS:
-            case NOT_EQUALS:
-                return UNORDERED;
-            default:
-                throw new IllegalArgumentException("Unsupported relational operator: " + op.toString());
-        }
-    }
 
     StoreState addToStore(NameLiteralRelation relation) {
         String ident = relation.getName().getName().getIdentifier();
