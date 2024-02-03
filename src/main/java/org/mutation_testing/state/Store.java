@@ -153,6 +153,5 @@ public class Store {
         } else {
             throw new IllegalArgumentException("Unknown relation type: " + relation);
         }
-        
     }
 }
