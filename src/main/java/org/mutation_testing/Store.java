@@ -5,11 +5,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.mutation_testing.relation.NameLiteralRelation;
+import org.mutation_testing.relation.Relation;
+
 import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.BinaryExpr.Operator;
 import com.github.javaparser.ast.type.PrimitiveType;
 import com.github.javaparser.ast.expr.Expression;
-import com.github.javaparser.ast.expr.IntegerLiteralExpr;
 import com.github.javaparser.ast.expr.LiteralExpr;
 import com.github.javaparser.ast.expr.NameExpr;
 
@@ -67,60 +69,66 @@ public class Store {
     static final int ORDERED = 1;
     static final int UNORDERED = 2;
 
-    StoreState addToStore(NameExpr name, LiteralExpr lit, Operator op) {
-        String ident = name.getName().getIdentifier();
-        StoreState state = localStore.get(ident);
-        int opType;
-
+    private int relOpType(Operator op) {
         switch (op) {
             case GREATER:
             case GREATER_EQUALS:
             case LESS:
             case LESS_EQUALS:
-                opType = ORDERED;
-                break;
+                return ORDERED;
             case EQUALS:
             case NOT_EQUALS:
-                opType = UNORDERED;
-                break;
+                return UNORDERED;
             default:
-                throw new IllegalArgumentException("Unsupported operator");
+                throw new IllegalArgumentException("Unsupported relational operator: " + op.toString());
         }
+    }
+
+    StoreState addToStore(NameLiteralRelation relation) {
+        String ident = relation.getName().getName().getIdentifier();
+        LiteralExpr lit = relation.getLiteral();
+        StoreState state = localStore.get(ident);
+
         Long value;
         PrimitiveType type;
+
         if (lit.isIntegerLiteralExpr()) {
             type = PrimitiveType.intType();
             value = Long.parseLong(lit.asIntegerLiteralExpr().getValue());
         } else if (lit.isCharLiteralExpr()) {
             type = PrimitiveType.charType();
             value = (long) lit.asCharLiteralExpr().getValue().charAt(0);
+        } else if (lit.isLongLiteralExpr()) {
+            type = PrimitiveType.longType();
+            value = Long.parseLong(lit.asLongLiteralExpr().getValue());
         } else {
             throw new IllegalArgumentException("Unsupported literal type");
         }
+
         if (state == null) {
             state = new StoreState(type);
             localStore.put(ident, state);
         }
-        if (opType == ORDERED) {
+
+        if (state.type != type) {
+            throw new IllegalArgumentException("Type mismatch for variable " + ident + ": " + state.type + " != " + type);
+        }
+
+        if (relation.isOrdered()) {
             state.intervals.puncture(value);
         } else {
             state.intervals.splitAt(value);
         }
-        return state;
 
+        return state;
     }
 
-    void processNameLiteralRelation(BinaryExpr relation) {
-        Expression left = relation.getLeft();
-        Expression right = relation.getRight();
-        Operator op = relation.getOperator();
-
-        if (left.isLiteralExpr() && right.isNameExpr()) {
-            addToStore(right.asNameExpr(), left.asLiteralExpr(), op);
-        } else if (left.isNameExpr() && right.isLiteralExpr()) {
-            addToStore(left.asNameExpr(), right.asLiteralExpr(), op);
+    void processRelation(Relation relation) {
+        if (relation.isNameLiteralRelation()) {
+            addToStore(relation.asNameLiteralRelation());
         } else {
-            throw new IllegalArgumentException("Can only handle relations comparing a literal and a name");
+            throw new IllegalArgumentException("Unsupported relation type: " + relation.getClass().getName());
         }
+        
     }
 }

@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.mutation_testing.ExpressionPropertyVisitor.Properties;
+import org.mutation_testing.relation.Relation;
+import org.mutation_testing.relation.RelationalVisitor;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -162,12 +164,11 @@ public class Mutator extends VoidVisitorAdapter<Void> {
         assert ps.isPure;
         assert !ps.hasUnhandledProperties;
 
-        List<BinaryExpr> relations = new ArrayList<>();
+        List<Relation> relations = new ArrayList<>();
         n.accept(rv, relations);
+        Store store = new Store();
 
-        for (Expression r : relations) {
-
-            addMutantFromCondition(n, r);
+        for (Relation r : relations) {
         }
     }
 }
