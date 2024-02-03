@@ -71,7 +71,7 @@ public class Store {
     public Store(List<Relation> relations) {
         this();
         for (Relation relation : relations) {
-            processRelation(relation);
+            addRelation(relation);
         }
     }
 
@@ -138,7 +138,7 @@ public class Store {
         throw new NotImplementedException("addToStore(ExprExprRelation) not implemented");
     }
 
-    void processRelation(Relation relation) {
+    void addRelation(Relation relation) {
         if (relation.isNameLiteralRelation()) {
             addToStore(relation.asNameLiteralRelation());
         } else if (relation.isNameNameRelation()) {
