@@ -6,12 +6,12 @@ import com.github.javaparser.ast.expr.Expression;
 public abstract class Relation {
     protected boolean isOrdered;
     protected RelationType relationType;
-    protected BinaryExpr relation;
+    protected BinaryExpr relationNode;
 
     protected Relation(BinaryExpr expr, RelationType relationType) {
         if (!opIsRelational(expr.getOperator()))
             throw new IllegalArgumentException("Operator must be a relational operator: " + expr);
-        this.relation = expr;
+        this.relationNode = expr;
         this.relationType = relationType;
         this.isOrdered = opIsOrdered(expr.getOperator());
     }
@@ -25,7 +25,7 @@ public abstract class Relation {
     }
 
     public BinaryExpr getNode() {
-        return relation;
+        return relationNode;
     }
 
     /**
@@ -39,7 +39,7 @@ public abstract class Relation {
         Expression left = relExpr.getLeft();
         Expression right = relExpr.getRight();
 
-        if (! opIsRelational(relExpr.getOperator())){
+        if (!opIsRelational(relExpr.getOperator())) {
             throw new IllegalArgumentException("Operator must be a relational operator: " + relExpr);
         }
 
@@ -116,26 +116,26 @@ public abstract class Relation {
     }
 
     public NameNameRelation asNameNameRelation() {
-        throw new UnsupportedOperationException("This relation is not a NameNameRelation: " + relation);
+        throw new UnsupportedOperationException("This relation is not a NameNameRelation: " + relationNode);
     }
 
     public ExprNameRelation asExprNameRelation() {
-        throw new UnsupportedOperationException("This relation is not an ExprNameRelation: " + relation);
+        throw new UnsupportedOperationException("This relation is not an ExprNameRelation: " + relationNode);
     }
 
     public NameLiteralRelation asNameLiteralRelation() {
-        throw new UnsupportedOperationException("This relation is not a NameLiteralRelation: " + relation);
+        throw new UnsupportedOperationException("This relation is not a NameLiteralRelation: " + relationNode);
     }
 
     public ExprLiteralRelation asExprLiteralRelation() {
-        throw new UnsupportedOperationException("This relation is not a ExprLiteralRelation: " + relation);
+        throw new UnsupportedOperationException("This relation is not a ExprLiteralRelation: " + relationNode);
     }
 
     public LiteralLiteralRelation asLiteralLiteralRelation() {
-        throw new UnsupportedOperationException("This relation is not a LiteralLiteralRelation: " + relation);
+        throw new UnsupportedOperationException("This relation is not a LiteralLiteralRelation: " + relationNode);
     }
 
     public ExprExprRelation asExprExprRelation() {
-        throw new UnsupportedOperationException("This relation is not a ExprExprRelation: " + relation);
+        throw new UnsupportedOperationException("This relation is not a ExprExprRelation: " + relationNode);
     }
 }

@@ -42,12 +42,16 @@ public class Mutant {
 
     public String asFileString() {
         String[] lines = source.getLines();
+        Position begin;
+        Position end;
 
-        if (!origNode.getBegin().isPresent() || !origNode.getEnd().isPresent()) {
+        if (origNode.getBegin().isPresent() && origNode.getEnd().isPresent()) {
+            begin = origNode.getBegin().get();
+            end = origNode.getEnd().get();
+        } else {
             throw new IllegalStateException("Node has no begin or end position:" + origNode);
         }
-        Position begin = origNode.getBegin().get();
-        Position end = origNode.getEnd().get();
+
         int beginLine = begin.line - 1;
         int beginColumn = begin.column - 1;
         int endLine = end.line - 1;
