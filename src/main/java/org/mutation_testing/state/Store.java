@@ -81,7 +81,6 @@ public class Store {
     StoreState addToStore(NameLiteralRelation relation) {
         String ident = relation.getName().getName().getIdentifier();
         LiteralExpr lit = relation.getLiteral();
-        StoreState state = localStore.get(ident);
 
         Long value;
         PrimitiveType type;
@@ -99,13 +98,11 @@ public class Store {
             throw new IllegalArgumentException("Unsupported literal type");
         }
 
-        if (state == null) {
-            state = new StoreState(type);
-            localStore.put(ident, state);
-        }
+        StoreState state = localStore.computeIfAbsent(ident, k -> new StoreState(type));
 
         if (state.type != type) {
-            throw new IllegalArgumentException("Type mismatch for variable " + ident + ": " + state.type + " != " + type);
+            throw new IllegalArgumentException(
+                    "Type mismatch for variable " + ident + ": " + state.type + " != " + type);
         }
 
         if (relation.isOrdered()) {
