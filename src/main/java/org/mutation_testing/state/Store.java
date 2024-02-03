@@ -1,10 +1,11 @@
-package org.mutation_testing;
+package org.mutation_testing.state;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.mutation_testing.NotImplementedException;
 import org.mutation_testing.relation.ExprExprRelation;
 import org.mutation_testing.relation.ExprLiteralRelation;
 import org.mutation_testing.relation.ExprNameRelation;
@@ -59,8 +60,6 @@ public class Store {
      * maintained by the developer.
      */
     Map<Expression, StoreState> miscStore;
-
-    NameVisitor nv = new NameVisitor();
 
     public Store() {
         fieldStore = new HashMap<>();

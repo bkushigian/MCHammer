@@ -1,4 +1,4 @@
-package org.mutation_testing;
+package org.mutation_testing.visitors;
 
 import java.util.StringJoiner;
 
@@ -45,60 +45,84 @@ public class ExpressionPropertyVisitor extends GenericVisitorAdapter<ExpressionP
      * </li>
      * </ul>
      */
-    static class Properties {
-        boolean isSimpleRelational = false;
-        boolean isSimpleArithmetic = false;
-        boolean isSimplePredicate = false;
-        boolean isSimpleLogical = false;
-        boolean isName = false;
-        boolean isSimpleName = false;
-        boolean isLiteral = false;
-        boolean isPure = false;
+    public static class Properties {
+        protected boolean isSimpleRelational = false;
+        protected boolean isSimpleArithmetic = false;
+        protected boolean isSimplePredicate = false;
+        protected boolean isSimpleLogical = false;
+        protected boolean isName = false;
+        protected boolean isSimpleName = false;
+        protected boolean isLiteral = false;
+        protected boolean isPure = false;
 
-        boolean hasUnhandledProperties = false;
+        protected boolean hasUnhandledProperties = false;
 
-        boolean canMutate() {
+        public boolean canMutate() {
             return isSimpleRelational || isSimplePredicate || isSimpleLogical;
         }
 
-        boolean isTerminal() {
+        public boolean isTerminal() {
             return isName || isSimpleName || isLiteral;
         }
 
-        boolean isName() {
+        public boolean isName() {
             return isName;
         }
 
-        boolean isSimpleName() {
+        public boolean isSimpleName() {
             return isSimpleName;
         }
 
-        boolean isLiteral() {
+        public boolean isLiteral() {
             return isLiteral;
         }
 
-        static Properties literal() {
+        public boolean isPure() {
+            return isPure;
+        }
+
+        public boolean isSimpleRelational() {
+            return isSimpleRelational;
+        }
+
+        public boolean isSimpleArithmetic() {
+            return isSimpleArithmetic;
+        }
+
+        public boolean isSimplePredicate() {
+            return isSimplePredicate;
+        }
+
+        public boolean isSimpleLogical() {
+            return isSimpleLogical;
+        }
+
+        public boolean hasUnhandledProperties() {
+            return hasUnhandledProperties;
+        }
+
+        protected static Properties literal() {
             Properties p = new Properties();
             p.isLiteral = true;
             p.isPure = true;
             return p;
         }
 
-        static Properties name() {
+        protected static Properties name() {
             Properties p = new Properties();
             p.isName = true;
             p.isPure = true;
             return p;
         }
 
-        static Properties simpleName() {
+        protected static Properties simpleName() {
             Properties p = new Properties();
             p.isSimpleName = true;
             p.isPure = true;
             return p;
         }
 
-        static Properties unhandled() {
+        protected static Properties unhandled() {
             Properties p = new Properties();
             p.hasUnhandledProperties = true;
             return p;

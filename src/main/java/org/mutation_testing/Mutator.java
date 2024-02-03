@@ -5,9 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.mutation_testing.ExpressionPropertyVisitor.Properties;
 import org.mutation_testing.relation.Relation;
 import org.mutation_testing.relation.RelationalVisitor;
+import org.mutation_testing.state.Store;
+import org.mutation_testing.visitors.ExpressionPropertyVisitor;
+import org.mutation_testing.visitors.ExpressionPropertyVisitor.Properties;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -161,8 +163,8 @@ public class Mutator extends VoidVisitorAdapter<Void> {
             super.visit(n, arg);
             return;
         }
-        assert ps.isPure;
-        assert !ps.hasUnhandledProperties;
+        assert ps.isPure();
+        assert !ps.hasUnhandledProperties();
 
         List<Relation> relations = new ArrayList<>();
         n.accept(rv, relations);

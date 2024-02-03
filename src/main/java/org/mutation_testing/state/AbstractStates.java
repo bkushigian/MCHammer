@@ -1,4 +1,4 @@
-package org.mutation_testing;
+package org.mutation_testing.state;
 
 import java.util.List;
 

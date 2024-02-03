@@ -1,7 +1,7 @@
-package org.mutation_testing;
+package org.mutation_testing.state;
 
 import static org.junit.Assert.*;
-import static org.mutation_testing.PuncturedIntervals.Interval;
+import static org.mutation_testing.state.PuncturedIntervals.Interval;
 
 public class AbstractStatesTest {
         Interval I(Long lowerBound, Long upperBound, Long... punctures) {
