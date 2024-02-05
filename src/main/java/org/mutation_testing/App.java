@@ -22,7 +22,8 @@ public class App {
     String mutantsLog = "mutants.msav.log";
     Mutator mutator = new Mutator();
 
-    public App() {}
+    public App() {
+    }
 
     public static void main(String[] args) {
         App app = new App();
@@ -62,7 +63,7 @@ public class App {
         return Paths.get(outdir).resolve(mutantsLog);
     }
 
-    private void parseArgs(String...args) {
+    private void parseArgs(String... args) {
         int argIndex = 0;
         while (argIndex < args.length) {
             if ("--outdir".equals(args[argIndex])) {
@@ -86,8 +87,7 @@ public class App {
                     System.exit(1);
                 }
                 sourceRoots.add(args[argIndex]);
-            }
-            else {
+            } else {
                 filenames.add(args[argIndex]);
             }
             argIndex += 1;
