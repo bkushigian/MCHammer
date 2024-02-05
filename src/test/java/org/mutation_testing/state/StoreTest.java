@@ -25,7 +25,7 @@ public class StoreTest {
         // 3. x == 5
         // 4. x >= 6
         String exprString = "x == 1 || x > 5";
-        Store store =  storeFromExpr(StaticJavaParser.parseExpression(exprString));
+        Store store = storeFromExpr(StaticJavaParser.parseExpression(exprString));
         assertTrue(store.fieldStore.isEmpty());
         assertTrue(store.miscStore.isEmpty());
 
@@ -33,7 +33,7 @@ public class StoreTest {
         assertTrue(store.localStore.containsKey("x"));
 
         List<Expression> product = store.getProductConditions();
-        System.out.println("Product: " + product);
+        printProduct(exprString, store, product);
         assertEquals(4, product.size());
 
     }
@@ -43,23 +43,34 @@ public class StoreTest {
         // This should produce 4 abstract states: 2 for x, 2 for y
 
         String exprString = "x == 1 && y != 1";
-        Store store =  storeFromExpr(StaticJavaParser.parseExpression(exprString));
+        Store store = storeFromExpr(StaticJavaParser.parseExpression(exprString));
 
         List<Expression> product = store.getProductConditions();
+        printProduct(exprString, store, product);
         assertEquals(4, product.size());
 
     }
-    @Test 
+
+    @Test
     public void testStoreProductForTwoVariables02() {
         // This should produce 9 abstract states: (the product of 3 for x, 3 for y)
         String exprString = "x == 1 || x == 2 || y == 1 || y == 2";
-        Store store =  storeFromExpr(StaticJavaParser.parseExpression(exprString));
+        Store store = storeFromExpr(StaticJavaParser.parseExpression(exprString));
 
         List<Expression> product = store.getProductConditions();
+        printProduct(exprString, store, product);
         assertEquals(9, product.size());
 
     }
 
+    void printProduct(String exprString, Store store, List<Expression> product) {
+        System.out.println("\n\n---- TEST CASE SUMMARY ----");
+        System.out.println("[[ expr: " + exprString + " ]]");
+        System.out.println(store.pretty());
+        System.out.println("Product:");
+        for (Expression e : product) {
+            System.out.println(" - " + e);
+        }
+    }
 
-    
 }

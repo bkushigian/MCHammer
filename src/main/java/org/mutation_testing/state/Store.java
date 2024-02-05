@@ -94,7 +94,6 @@ public class Store {
                 || maybeNull.isAssignExpr()) {
             maybeNull = enclose(maybeNull);
         }
-
         return new BinaryExpr(maybeNull, cond2, BinaryExpr.Operator.AND);
     }
 
@@ -109,8 +108,8 @@ public class Store {
     }
 
     private List<Expression> conditionProductHelper(List<List<Expression>> abstractValueConditions) {
-        int[] indices = new int[abstractValueConditions.size()];  // Track the current index for each list of conditions
-        int[] sizes = new int[abstractValueConditions.size()];    // Track the size of each list of conditions
+        int[] indices = new int[abstractValueConditions.size()]; // Track the current index for each list of conditions
+        int[] sizes = new int[abstractValueConditions.size()]; // Track the size of each list of conditions
         int totalSize = 1;
 
         for (int i = 0; i < abstractValueConditions.size(); i++) {
@@ -234,5 +233,17 @@ public class Store {
         } else {
             throw new IllegalArgumentException("Unknown relation type: " + relation);
         }
+    }
+
+    public String pretty() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Local variables:\n");
+        for (Map.Entry<String, StoreState> e : localStore.entrySet()) {
+            String name = e.getKey();
+            StoreState state = e.getValue();
+            sb.append(name).append(": ").append("{ ")
+                    .append(state.intervals.pretty(name)).append(" }\n");
+        }
+        return sb.toString();
     }
 }
