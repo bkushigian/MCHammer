@@ -17,6 +17,7 @@ import org.mutation_testing.mutate.Mutator;
  */
 public class App {
     List<String> filenames = new ArrayList<>();
+    List<String> sourceRoots = new ArrayList<>();
     String outdir = "msav_out";
     String mutantsLog = "mutants.msav.log";
     Mutator mutator = new Mutator();
@@ -78,7 +79,15 @@ public class App {
                     System.exit(1);
                 }
                 mutantsLog = args[argIndex];
-            } else {
+            } else if ("--sourceroot".equals(args[argIndex])) {
+                argIndex += 1;
+                if (argIndex >= args.length) {
+                    System.err.println("Missing argument for --sourceroot");
+                    System.exit(1);
+                }
+                sourceRoots.add(args[argIndex]);
+            }
+            else {
                 filenames.add(args[argIndex]);
             }
             argIndex += 1;

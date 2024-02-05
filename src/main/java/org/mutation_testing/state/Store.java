@@ -16,6 +16,7 @@ import org.mutation_testing.relation.Relation;
 
 import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.EnclosedExpr;
+import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.PrimitiveType;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.LiteralExpr;
@@ -177,6 +178,12 @@ public class Store {
         } else if (lit.isLongLiteralExpr()) {
             type = PrimitiveType.longType();
             value = Long.parseLong(lit.asLongLiteralExpr().getValue());
+        } else if (lit.isStringLiteralExpr()) {
+            throw new NotImplementedException("String literals not implemented");
+        } else if (lit.isDoubleLiteralExpr()) {
+            throw new NotImplementedException("Double literals not implemented");
+        } else if (lit.isBooleanLiteralExpr()) {
+            throw new NotImplementedException("Boolean literals not implemented");
         } else {
             throw new IllegalArgumentException("Unsupported literal type");
         }
