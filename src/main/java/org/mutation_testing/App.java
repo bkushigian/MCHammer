@@ -30,7 +30,7 @@ public class App {
 
     void run() {
         if (filenames.isEmpty()) {
-            System.out.println("No files to mutate");
+            System.err.println("No files to mutate");
             return;
         }
         final List<Mutant> mutants = mutateFilenames();
