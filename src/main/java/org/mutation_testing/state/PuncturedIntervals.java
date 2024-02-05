@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.github.javaparser.ast.expr.BinaryExpr;
-import com.github.javaparser.ast.expr.EnclosedExpr;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.LongLiteralExpr;
 import com.github.javaparser.ast.expr.NameExpr;
@@ -125,10 +124,6 @@ public class PuncturedIntervals implements AbstractStates {
 
         private BinaryExpr eq(Expression expr, Long puncture) {
             return new BinaryExpr(expr, new LongLiteralExpr(puncture.toString()), BinaryExpr.Operator.EQUALS);
-        }
-
-        private EnclosedExpr enclose(Expression expr) {
-            return new EnclosedExpr(expr);
         }
 
         /**
