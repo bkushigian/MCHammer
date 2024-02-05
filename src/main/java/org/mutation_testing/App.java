@@ -21,17 +21,47 @@ public class App {
     String mutantsLog = "mutants.msav.log";
     Mutator mutator = new Mutator();
 
-    public App(List<String> filenames, String outdir, String mutantsLog) {
-        this.filenames = filenames;
-        this.outdir = outdir;
-        this.mutantsLog = mutantsLog;
-    }
+    public App() {}
 
     public static void main(String[] args) {
-        String outdir = "msav_out";
-        String mutantsLog = "mutants.msav.log";
-        List<String> filenames = new ArrayList<>();
+        App app = new App();
+        app.parseArgs(args);
+        app.run();
+    }
 
+    void run() {
+        if (filenames.isEmpty()) {
+            System.out.println("No files to mutate");
+            return;
+        }
+        final List<Mutant> mutants = mutateFilenames();
+        Mutant.writeMutantsLog(mutantsLog, mutants);
+        writeMutantsToDisk(mutants);
+        System.out.println("Generated " + mutants.size() + " mutants in " + mutantsDir());
+    }
+
+    List<Mutant> mutateFilenames() {
+        List<Mutant> mutants = new ArrayList<>();
+        for (String filename : filenames) {
+            try {
+                mutants.addAll(mutator.mutateFile(filename));
+            } catch (IOException e) {
+                System.err.println("Error mutating file " + filename);
+                e.printStackTrace();
+            }
+        }
+        return mutants;
+    }
+
+    Path mutantsDir() {
+        return Paths.get(outdir).resolve("mutants");
+    }
+
+    Path mutantsLogPath() {
+        return Paths.get(outdir).resolve(mutantsLog);
+    }
+
+    private void parseArgs(String...args) {
         int argIndex = 0;
         while (argIndex < args.length) {
             if ("--outdir".equals(args[argIndex])) {
@@ -53,27 +83,9 @@ public class App {
             }
             argIndex += 1;
         }
-
-        App app = new App(filenames, outdir, mutantsLog);
-        app.run();
     }
 
-    void run() {
-        final List<Mutant> mutants = new ArrayList<>();
-        if (filenames.isEmpty()) {
-            System.out.println("No files to mutate");
-            return;
-        }
-        for (String filename : filenames) {
-            try {
-                mutants.addAll(mutator.mutateFile(filename));
-            } catch (IOException e) {
-                System.err.println("Error mutating file " + filename);
-                e.printStackTrace();
-            }
-        }
-
-        // Check if outdir exists, and if not, create it
+    Path makeMutantsDir() {
         Path outdirPath = Paths.get(outdir);
         Path mutantsDir = outdirPath.resolve("mutants");
         if (!Files.exists(outdirPath)) {
@@ -83,12 +95,15 @@ public class App {
             } catch (IOException e) {
                 System.err.println("Error creating directory " + outdir);
                 e.printStackTrace();
-                return;
+                return null;
             }
         }
+        return mutantsDir;
+    }
 
-        System.out.println("Writing mutant log to " + mutantsLog);
-        Mutant.writeMutantsLog(mutantsLog, mutants);
+    void writeMutantsToDisk(List<Mutant> mutants) {
+
+        Path mutantsDir = makeMutantsDir();
 
         for (Mutant mutant : mutants) {
             Path d = mutantsDir.resolve(mutant.getMid() + "");
@@ -114,7 +129,7 @@ public class App {
                 return;
             }
         }
-        System.out.println("Generated " + mutants.size() + " mutants in " + mutantsDir);
+
     }
 
     private void delete(File f) {
