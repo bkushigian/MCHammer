@@ -22,9 +22,6 @@ public class App {
     String mutantsLog = "mutants.msav.log";
     Mutator mutator = new Mutator();
 
-    public App() {
-    }
-
     public static void main(String[] args) {
         App app = new App();
         app.parseArgs(args);
