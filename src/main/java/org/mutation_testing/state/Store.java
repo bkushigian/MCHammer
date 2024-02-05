@@ -150,10 +150,7 @@ public class Store {
             conditionsToProduct.add(e.getValue().intervals.asConditions(name));
         }
 
-
-        List<Expression> product = conditionProductHelper(conditionsToProduct);
-
-        return product;
+        return conditionProductHelper(conditionsToProduct);
     }
 
     static final int UNKNOWN = 0;
