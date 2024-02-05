@@ -177,7 +177,7 @@ public class PuncturedIntervals implements AbstractStates {
             }
             // Now add the individual puncture points. Skip this for singleton
             // intervals (lowerBound == upperBound)
-            if (lowerBound != upperBound) {
+            if (!lowerBound.equals(upperBound)) {
                 for (Long puncture : punctures) {
                     conditions.add(eq(expr, puncture));
                 }
