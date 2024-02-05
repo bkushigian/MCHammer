@@ -90,11 +90,9 @@ public class Store {
         // - OR binary operators
         // - Ternary conditional operators
         // - Assignment operators
-        if (maybeNull.isBinaryExpr() && maybeNull.asBinaryExpr().getOperator() == BinaryExpr.Operator.OR) {
-            maybeNull = enclose(maybeNull);
-        } else if (maybeNull.isConditionalExpr()) {
-            maybeNull = enclose(maybeNull);
-        } else if (maybeNull.isAssignExpr()) {
+        if (maybeNull.isBinaryExpr() && maybeNull.asBinaryExpr().getOperator() == BinaryExpr.Operator.OR
+                || maybeNull.isConditionalExpr()
+                || maybeNull.isAssignExpr()) {
             maybeNull = enclose(maybeNull);
         }
 
