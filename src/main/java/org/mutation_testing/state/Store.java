@@ -16,7 +16,6 @@ import org.mutation_testing.relation.Relation;
 
 import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.EnclosedExpr;
-import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.PrimitiveType;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.LiteralExpr;
