@@ -15,6 +15,7 @@ public class Mutant {
     protected int mid;
     protected Node origNode;
     protected Node replNode;
+    protected Node mutationCondition;
     protected Source source;
 
     public int getMid() {
@@ -29,15 +30,20 @@ public class Mutant {
         return replNode;
     }
 
+    public Node getMutationCondition() {
+        return mutationCondition;
+    }
+
     public Source getSource() {
         return source;
     }
 
-    public Mutant(int mid, Source source, Node originalNode, Node replNode) {
+    public Mutant(int mid, Source source, Node originalNode, Node replNode, Node mutationCondition) {
         this.mid = mid;
         this.source = source;
         this.origNode = originalNode;
         this.replNode = replNode;
+        this.mutationCondition = mutationCondition;
     }
 
     public String asFileString() {

@@ -116,11 +116,11 @@ public class Mutator extends VoidVisitorAdapter<Void> {
         }
         Expression repl = new ConditionalExpr(new EnclosedExpr(mutationCondition), mutatedExpr, clonedOriginalExpr);
         repl = new EnclosedExpr(repl);
-        addMutant(originalExpr, repl);
+        addAbstractValueMutant(originalExpr, repl, mutationCondition);
     }
 
-    protected void addMutant(Expression orig, Expression repl) {
-        Mutant mutant = new Mutant(mid, source, orig, repl);
+    protected void addAbstractValueMutant(Expression orig, Expression repl, Expression mutationCondition) {
+        Mutant mutant = new Mutant(mid, source, orig, repl, mutationCondition);
         mutants.add(mutant);
         mid += 1;
     }
