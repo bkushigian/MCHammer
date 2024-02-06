@@ -3,7 +3,6 @@ package org.mutation_testing.state;
 import java.util.List;
 
 import com.github.javaparser.ast.expr.Expression;
-import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.resolution.types.ResolvedType;
 
 /**
