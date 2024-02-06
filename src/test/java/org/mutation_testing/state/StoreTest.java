@@ -26,12 +26,6 @@ public class StoreTest {
         StaticJavaParser.getParserConfiguration().setSymbolResolver(new JavaSymbolSolver(typeSolver));
     }
 
-    protected Store storeFromExpr(String expr, String...args) {
-        String prog = makeClass(expr, args);
-        CompilationUnit cu = StaticJavaParser.parse(prog);
-        return new Store(rv.collectRelations(cu));
-    }
-
     @Test
     public void testStoreProductForSingleVariable() {
         // This should produce 4 abstract states
@@ -78,27 +72,22 @@ public class StoreTest {
 
     }
 
-    String makeClass(String expr, String...args) {
-        StringJoiner argJoiner = new StringJoiner(", ");
-        for (String arg : args) {
-            argJoiner.add(arg);
-        }
-        return "class TestClass {\n" +
-            "boolean f(" + argJoiner + ") {\n" +
-            "return " + expr + ";\n" +
-            "}\n" +
-            "}";
-    }
-
-    @Test public void testStoreTypes() {
+    @Test
+    public void testStoreTypes() {
         String exprString = "x == 1 || x > 5";
         Store store = storeFromExpr(exprString, "int x");
         List<Expression> product = store.getProductConditions();
         printProduct(exprString, store, product);
         assertEquals(4, product.size());
-
     }
 
+    /**
+     * Print the result of collecting the product of spaces from a {@code Store}
+     * 
+     * @param exprString
+     * @param store
+     * @param product
+     */
     void printProduct(String exprString, Store store, List<Expression> product) {
         System.out.println("\n\n---- TEST CASE SUMMARY ----");
         System.out.println("[[ expr: " + exprString + " ]]");
@@ -107,6 +96,44 @@ public class StoreTest {
         for (Expression e : product) {
             System.out.println(" - " + e);
         }
+    }
+
+    /**
+     * A helper method to create a class with a single method wrapping the
+     * expression passed in. This wrapper method will define each variable's type
+     * according to the args passed in.
+     * 
+     * @param expr          the expression to wrap
+     * @param variableTypes "int a", "char c", "String s", etc
+     * @return
+     */
+    protected String makeClass(String expr, String... variableTypes) {
+        StringJoiner argJoiner = new StringJoiner(", ");
+        for (String arg : variableTypes) {
+            argJoiner.add(arg);
+        }
+        return "class TestClass {\n" +
+                "boolean f(" + argJoiner + ") {\n" +
+                "return " + expr + ";\n" +
+                "}\n" +
+                "}";
+    }
+
+    /**
+     * Create a {@code Store} from a given expression and arguments/types.
+     * For instance, calling {@code storeFromExpr("x == 1 || x > 5", "int x")}
+     * will return a Store for the expression {@code x == 1 || x > 5} where x is
+     * an integer.
+     * 
+     * @param expr the expression to parse
+     * @param args the types of each variable in the expression in the form "TYPE
+     *             VARIABLE". For instance: "int x", "int y", "char c"
+     * @return a {@code Store} for the given expression
+     */
+    protected Store storeFromExpr(String expr, String... args) {
+        String prog = makeClass(expr, args);
+        CompilationUnit cu = StaticJavaParser.parse(prog);
+        return new Store(rv.collectRelations(cu));
     }
 
 }
