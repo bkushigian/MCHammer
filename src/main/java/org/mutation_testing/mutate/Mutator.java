@@ -56,10 +56,6 @@ public class Mutator extends VoidVisitorAdapter<Void> {
      */
     protected List<Mutant> mutants = new ArrayList<>();
 
-    protected boolean ready() {
-        return source == null;
-    }
-
     protected void cleanup() {
         source = null;
         mutants = null;
@@ -72,9 +68,6 @@ public class Mutator extends VoidVisitorAdapter<Void> {
     }
 
     public List<Mutant> mutate(String filename, String fileContents) {
-        if (!ready()) {
-            throw new IllegalStateException("Cannot mutate file while mutating another file");
-        }
 
         this.source = new Source(filename, fileContents);
         mutants = new ArrayList<>();
