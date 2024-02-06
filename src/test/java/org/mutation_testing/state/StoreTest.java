@@ -3,11 +3,11 @@ package org.mutation_testing.state;
 import static org.junit.Assert.*;
 
 import java.util.List;
-import java.util.StringJoiner;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mutation_testing.relation.RelationalVisitor;
+import org.mutation_testing.TestUtils;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
@@ -99,27 +99,6 @@ public class StoreTest {
     }
 
     /**
-     * A helper method to create a class with a single method wrapping the
-     * expression passed in. This wrapper method will define each variable's type
-     * according to the args passed in.
-     * 
-     * @param expr          the expression to wrap
-     * @param variableTypes "int a", "char c", "String s", etc
-     * @return
-     */
-    protected String makeClass(String expr, String... variableTypes) {
-        StringJoiner argJoiner = new StringJoiner(", ");
-        for (String arg : variableTypes) {
-            argJoiner.add(arg);
-        }
-        return "class TestClass {\n" +
-                "boolean f(" + argJoiner + ") {\n" +
-                "return " + expr + ";\n" +
-                "}\n" +
-                "}";
-    }
-
-    /**
      * Create a {@code Store} from a given expression and arguments/types.
      * For instance, calling {@code storeFromExpr("x == 1 || x > 5", "int x")}
      * will return a Store for the expression {@code x == 1 || x > 5} where x is
@@ -131,7 +110,7 @@ public class StoreTest {
      * @return a {@code Store} for the given expression
      */
     protected Store storeFromExpr(String expr, String... args) {
-        String prog = makeClass(expr, args);
+        String prog = TestUtils.makeClass(expr, args);
         CompilationUnit cu = StaticJavaParser.parse(prog);
         return new Store(rv.collectRelations(cu));
     }

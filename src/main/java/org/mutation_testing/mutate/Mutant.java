@@ -10,12 +10,13 @@ import org.mutation_testing.Source;
 
 import com.github.javaparser.Position;
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.expr.Expression;
 
 public class Mutant {
     protected int mid;
     protected Node origNode;
     protected Node replNode;
-    protected Node mutationCondition;
+    protected Expression mutationCondition;
     protected Source source;
 
     public int getMid() {
@@ -30,7 +31,7 @@ public class Mutant {
         return replNode;
     }
 
-    public Node getMutationCondition() {
+    public Expression getMutationCondition() {
         return mutationCondition;
     }
 
@@ -38,7 +39,7 @@ public class Mutant {
         return source;
     }
 
-    public Mutant(int mid, Source source, Node originalNode, Node replNode, Node mutationCondition) {
+    public Mutant(int mid, Source source, Node originalNode, Node replNode, Expression mutationCondition) {
         this.mid = mid;
         this.source = source;
         this.origNode = originalNode;
