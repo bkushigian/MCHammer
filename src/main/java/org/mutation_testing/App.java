@@ -11,6 +11,12 @@ import java.util.List;
 import org.mutation_testing.mutate.Mutant;
 import org.mutation_testing.mutate.Mutator;
 
+import com.github.javaparser.StaticJavaParser;
+import com.github.javaparser.symbolsolver.JavaSymbolSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
+
 /**
  * Hello world!
  *
@@ -22,9 +28,12 @@ public class App {
     String mutantsLog = "mutants.msav.log";
     Mutator mutator = new Mutator();
 
+    JavaSymbolSolver symbolSolver;
+
     public static void main(String[] args) {
         App app = new App();
         app.parseArgs(args);
+        app.initializeSymbolResolver();
         app.run();
     }
 
@@ -89,6 +98,15 @@ public class App {
             }
             argIndex += 1;
         }
+    }
+
+    private void initializeSymbolResolver() {
+        CombinedTypeSolver typeSolver = new CombinedTypeSolver();
+        typeSolver.add(new ReflectionTypeSolver());
+        for (String sourceRoot : sourceRoots) {
+            typeSolver.add(new JavaParserTypeSolver(sourceRoot));
+        }
+        StaticJavaParser.getParserConfiguration().setSymbolResolver(new JavaSymbolSolver(typeSolver));
     }
 
     Path makeMutantsDir() {
