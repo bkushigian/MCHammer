@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.github.javaparser.ast.expr.BinaryExpr;
-import com.github.javaparser.ast.expr.EnclosedExpr;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.LongLiteralExpr;
 import com.github.javaparser.ast.expr.NameExpr;
@@ -127,10 +126,6 @@ public class PuncturedIntervals implements AbstractStates {
             return new BinaryExpr(expr, new LongLiteralExpr(puncture.toString()), BinaryExpr.Operator.EQUALS);
         }
 
-        private EnclosedExpr enclose(Expression expr) {
-            return new EnclosedExpr(expr);
-        }
-
         /**
          * Make a condition that the variable is within the bounds and is not
          * one of the puncture points. If all points within this interval are punctured,
@@ -177,7 +172,7 @@ public class PuncturedIntervals implements AbstractStates {
             }
             // Now add the individual puncture points. Skip this for singleton
             // intervals (lowerBound == upperBound)
-            if (lowerBound != upperBound) {
+            if (!lowerBound.equals(upperBound)) {
                 for (Long puncture : punctures) {
                     conditions.add(eq(expr, puncture));
                 }
@@ -293,7 +288,8 @@ public class PuncturedIntervals implements AbstractStates {
 
         @Override
         public String toString() {
-            return "Interval [lowerBound=" + lowerBound + ", upperBound=" + upperBound + ", punctures=" + punctures + "]";
+            return "Interval [lowerBound=" + lowerBound + ", upperBound=" + upperBound + ", punctures=" + punctures
+                    + "]";
         }
 
     }
@@ -321,5 +317,17 @@ public class PuncturedIntervals implements AbstractStates {
         } else if (!intervals.equals(other.intervals))
             return false;
         return true;
+    }
+
+    public String pretty(String name) {
+        StringBuilder sb = new StringBuilder();
+        for (PuncturedIntervals.Interval interval : intervals) {
+            List<Expression> conditions = interval.asConditions(new NameExpr(name));
+            for (Expression condition : conditions) {
+                sb.append(condition.toString());
+                sb.append(", ");
+            }
+        }
+        return sb.toString();
     }
 }

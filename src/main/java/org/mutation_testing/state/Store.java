@@ -16,7 +16,9 @@ import org.mutation_testing.relation.Relation;
 
 import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.EnclosedExpr;
-import com.github.javaparser.ast.type.PrimitiveType;
+import com.github.javaparser.resolution.types.ResolvedPrimitiveType;
+import com.github.javaparser.resolution.types.ResolvedReferenceType;
+import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.LiteralExpr;
 import com.github.javaparser.ast.expr.NameExpr;
@@ -25,24 +27,51 @@ import com.github.javaparser.ast.expr.NameExpr;
  * This stores abstract values for parameters, fields, local variables, etc
  */
 public class Store {
+
     /**
      * This represents the state an expression can have
      */
-    static class StoreState {
-        final PrimitiveType type;
+    abstract static class StoreState {
+        abstract List<Expression> asConditions(NameExpr name);
+        abstract String pretty(String expr);
+
+        ResolvedType type;
+
+        StoreState(ResolvedType type) {
+            this.type = type;
+        }
+
+    }
+
+    static class IntStoreState extends StoreState {
         final PuncturedIntervals intervals;
         final List<BinaryExpr> additionalRelations;
 
-        public StoreState(PrimitiveType type, PuncturedIntervals intervals, List<BinaryExpr> additionalRelations) {
-            this.type = type;
+        public IntStoreState(ResolvedType type, PuncturedIntervals intervals, List<BinaryExpr> additionalRelations) {
+            super(type);
             this.intervals = intervals;
             this.additionalRelations = additionalRelations;
         }
 
-        public StoreState(PrimitiveType type) {
-            this.type = type;
+        public IntStoreState(ResolvedType type) {
+            super(type);
             this.intervals = new PuncturedIntervals();
             this.additionalRelations = new ArrayList<>();
+        }
+
+        @Override
+        List<Expression> asConditions(NameExpr name) {
+            List<Expression> conditions = new ArrayList<>();
+            conditions.addAll(intervals.asConditions(name));
+            for (BinaryExpr relation : additionalRelations) {
+                conditions.add(relation);
+            }
+            return conditions;
+        }
+
+        @Override
+        String pretty(String expr) {
+            return intervals.pretty(expr);
         }
     }
 
@@ -89,14 +118,11 @@ public class Store {
         // - OR binary operators
         // - Ternary conditional operators
         // - Assignment operators
-        if (maybeNull.isBinaryExpr() && maybeNull.asBinaryExpr().getOperator() == BinaryExpr.Operator.OR) {
-            maybeNull = enclose(maybeNull);
-        } else if (maybeNull.isConditionalExpr()) {
-            maybeNull = enclose(maybeNull);
-        } else if (maybeNull.isAssignExpr()) {
+        if (maybeNull.isBinaryExpr() && maybeNull.asBinaryExpr().getOperator() == BinaryExpr.Operator.OR
+                || maybeNull.isConditionalExpr()
+                || maybeNull.isAssignExpr()) {
             maybeNull = enclose(maybeNull);
         }
-
         return new BinaryExpr(maybeNull, cond2, BinaryExpr.Operator.AND);
     }
 
@@ -111,8 +137,8 @@ public class Store {
     }
 
     private List<Expression> conditionProductHelper(List<List<Expression>> abstractValueConditions) {
-        int[] indices = new int[abstractValueConditions.size()];  // Track the current index for each list of conditions
-        int[] sizes = new int[abstractValueConditions.size()];    // Track the size of each list of conditions
+        int[] indices = new int[abstractValueConditions.size()]; // Track the current index for each list of conditions
+        int[] sizes = new int[abstractValueConditions.size()]; // Track the size of each list of conditions
         int totalSize = 1;
 
         for (int i = 0; i < abstractValueConditions.size(); i++) {
@@ -148,53 +174,80 @@ public class Store {
         for (Map.Entry<String, StoreState> e : localStore.entrySet()) {
             String ident = e.getKey();
             NameExpr name = new NameExpr(ident);
-            conditionsToProduct.add(e.getValue().intervals.asConditions(name));
+            conditionsToProduct.add(e.getValue().asConditions(name));
         }
 
-
-        List<Expression> product = conditionProductHelper(conditionsToProduct);
-
-        return product;
+        return conditionProductHelper(conditionsToProduct);
     }
 
     static final int UNKNOWN = 0;
     static final int ORDERED = 1;
     static final int UNORDERED = 2;
 
-    StoreState addToStore(NameLiteralRelation relation) {
-        String ident = relation.getName().getName().getIdentifier();
-        LiteralExpr lit = relation.getLiteral();
 
-        Long value;
-        PrimitiveType type;
-
+    Long getLongValueFromLiteral(LiteralExpr lit) {
         if (lit.isIntegerLiteralExpr()) {
-            type = PrimitiveType.intType();
-            value = Long.parseLong(lit.asIntegerLiteralExpr().getValue());
+            return Long.parseLong(lit.asIntegerLiteralExpr().getValue());
         } else if (lit.isCharLiteralExpr()) {
-            type = PrimitiveType.charType();
-            value = (long) lit.asCharLiteralExpr().getValue().charAt(0);
+            return (long) lit.asCharLiteralExpr().getValue().charAt(0);
         } else if (lit.isLongLiteralExpr()) {
-            type = PrimitiveType.longType();
-            value = Long.parseLong(lit.asLongLiteralExpr().getValue());
+            return Long.parseLong(lit.asLongLiteralExpr().getValue());
         } else {
             throw new IllegalArgumentException("Unsupported literal type");
         }
+    }
+    StoreState addPrimitiveToStore(NameLiteralRelation relation, ResolvedPrimitiveType typ) {
+        NameExpr nameExpr = relation.getName();
+        LiteralExpr lit = relation.getLiteral();
 
-        StoreState state = localStore.computeIfAbsent(ident, k -> new StoreState(type));
+        System.out.println("Type: " + typ.name());
 
-        if (!state.type.equals(type)) {
-            throw new IllegalArgumentException(
-                    "Type mismatch for variable " + ident + ": " + state.type + " != " + type);
+        switch (typ.name()) {
+            case "INT":
+            case "LONG":
+            case "CHAR":
+            case "SHORT":
+                IntStoreState state = (IntStoreState) localStore.computeIfAbsent(nameExpr.getNameAsString(), k -> new IntStoreState(typ));
+                Long value = getLongValueFromLiteral(lit);
+                if (relation.isOrdered()) {
+                    state.intervals.splitAt(value);
+                } else {
+                    state.intervals.puncture(value);
+                }
+                return state;
+            case "FLOAT":
+            case "DOUBLE":
+                throw new NotImplementedException("Floating point literals not implemented");
+            case "BOOLEAN":
+                throw new NotImplementedException("Boolean literals not implemented");
+            default:
+                throw new IllegalArgumentException("Unsupported primitive type");
         }
+    }
 
-        if (relation.isOrdered()) {
-            state.intervals.splitAt(value);
-        } else {
-            state.intervals.puncture(value);
+    StoreState addReferenceToStore(NameLiteralRelation relation, ResolvedReferenceType typ) {
+        NameExpr nameExpr = relation.getName();
+        System.out.println("Type: " + typ.describe());
+        StoreState state = localStore.computeIfAbsent(nameExpr.getNameAsString(), k -> new IntStoreState(typ));
+
+        if ("java.lang.String".equals(typ.getQualifiedName())) {
+            throw new NotImplementedException("String literals not implemented");
+        } else if (true) {
+            throw new IllegalArgumentException("Unsupported reference type: " + typ.getQualifiedName());
         }
-
         return state;
+    }
+
+    StoreState addToStore(NameLiteralRelation relation) {
+        ResolvedType resolvedType = relation.getName().resolve().getType();
+
+        if (resolvedType.isPrimitive()) {
+            return addPrimitiveToStore(relation, resolvedType.asPrimitive());
+        } else if (resolvedType.isReference()) {
+            throw new NotImplementedException("Reference types not implemented");
+        } else {
+            throw new IllegalArgumentException("Unsupported type");
+        }
     }
 
     void addToStore(NameNameRelation relation) {
@@ -233,5 +286,17 @@ public class Store {
         } else {
             throw new IllegalArgumentException("Unknown relation type: " + relation);
         }
+    }
+
+    public String pretty() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Local variables:\n");
+        for (Map.Entry<String, StoreState> e : localStore.entrySet()) {
+            String name = e.getKey();
+            StoreState state = e.getValue();
+            sb.append(name).append(": ").append("{ ")
+                    .append(state.pretty(name)).append(" }\n");
+        }
+        return sb.toString();
     }
 }
