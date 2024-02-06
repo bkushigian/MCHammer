@@ -6,13 +6,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.mutation_testing.NotImplementedException;
-import org.mutation_testing.relation.ExprExprRelation;
-import org.mutation_testing.relation.ExprLiteralRelation;
-import org.mutation_testing.relation.ExprNameRelation;
-import org.mutation_testing.relation.LiteralLiteralRelation;
-import org.mutation_testing.relation.NameLiteralRelation;
-import org.mutation_testing.relation.NameNameRelation;
-import org.mutation_testing.relation.Relation;
+import org.mutation_testing.predicates.ExprExprRelation;
+import org.mutation_testing.predicates.ExprLiteralRelation;
+import org.mutation_testing.predicates.ExprNameRelation;
+import org.mutation_testing.predicates.LiteralLiteralRelation;
+import org.mutation_testing.predicates.NameLiteralRelation;
+import org.mutation_testing.predicates.NameNameRelation;
+import org.mutation_testing.predicates.Relation;
 
 import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.EnclosedExpr;

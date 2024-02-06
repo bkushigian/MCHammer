@@ -1,4 +1,4 @@
-package org.mutation_testing.relation;
+package org.mutation_testing.predicates;
 
 import java.util.ArrayList;
 import java.util.List;

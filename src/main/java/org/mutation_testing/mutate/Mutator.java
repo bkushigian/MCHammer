@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.mutation_testing.Source;
-import org.mutation_testing.relation.Relation;
-import org.mutation_testing.relation.RelationalVisitor;
+import org.mutation_testing.predicates.Relation;
+import org.mutation_testing.predicates.RelationalVisitor;
 import org.mutation_testing.state.Store;
 import org.mutation_testing.visitors.ExpressionPropertyVisitor;
 import org.mutation_testing.visitors.ExpressionPropertyVisitor.Properties;
