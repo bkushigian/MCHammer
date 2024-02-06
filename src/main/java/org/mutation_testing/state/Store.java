@@ -29,53 +29,6 @@ import com.github.javaparser.ast.expr.NameExpr;
 public class Store {
 
     /**
-     * This represents the state an expression can have
-     */
-    abstract static class StoreState {
-        abstract List<Expression> asConditions(NameExpr name);
-        abstract String pretty(String expr);
-
-        ResolvedType type;
-
-        StoreState(ResolvedType type) {
-            this.type = type;
-        }
-
-    }
-
-    static class IntStoreState extends StoreState {
-        final PuncturedIntervals intervals;
-        final List<BinaryExpr> additionalRelations;
-
-        public IntStoreState(ResolvedType type, PuncturedIntervals intervals, List<BinaryExpr> additionalRelations) {
-            super(type);
-            this.intervals = intervals;
-            this.additionalRelations = additionalRelations;
-        }
-
-        public IntStoreState(ResolvedType type) {
-            super(type);
-            this.intervals = new PuncturedIntervals();
-            this.additionalRelations = new ArrayList<>();
-        }
-
-        @Override
-        List<Expression> asConditions(NameExpr name) {
-            List<Expression> conditions = new ArrayList<>();
-            conditions.addAll(intervals.asConditions(name));
-            for (BinaryExpr relation : additionalRelations) {
-                conditions.add(relation);
-            }
-            return conditions;
-        }
-
-        @Override
-        String pretty(String expr) {
-            return intervals.pretty(expr);
-        }
-    }
-
-    /**
      * Map field names to a store state
      */
     Map<String, StoreState> fieldStore;
