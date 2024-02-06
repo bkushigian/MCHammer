@@ -14,8 +14,6 @@ class StringStoreState extends StoreState {
      * Directly compared values. These are used similarly to a punctured
      * interval. These are from `.equals()` calls, not reference equality
      * checks.
-     * 
-     * TODO: How to hande reference equality checks?
      */
     List<String> values;
 
