@@ -1,10 +1,8 @@
 package org.mutation_testing.mutate;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -12,9 +10,6 @@ import java.util.stream.Collectors;
 
 import org.junit.Test;
 import org.mutation_testing.TestUtils;
-
-import com.github.javaparser.StaticJavaParser;
-import com.github.javaparser.ast.expr.Expression;
 
 public class MutatorTest {
 
@@ -27,13 +22,14 @@ public class MutatorTest {
     @Test
     public void testMutate02() {
         String prog = TestUtils.makeClass("x == 32 || x > 127", "int x");
-        assertExpectedMutationConditions(prog,  "x == 32", "x <= 126 && x != 32", "x == 127", "x >= 128");
+        assertExpectedMutationConditions(prog, "x == 32", "x <= 126 && x != 32", "x == 127", "x >= 128");
     }
 
     @Test
     public void testMutate03() {
         String prog = TestUtils.makeClass("x == 32 && y == 32", "int x", "int y");
-        assertExpectedMutationConditions(prog, "x != 32 && y != 32", "x == 32 && y != 32", "x != 32 && y == 32", "x == 32 && y == 32");
+        assertExpectedMutationConditions(prog, "x != 32 && y != 32", "x == 32 && y != 32", "x != 32 && y == 32",
+                "x == 32 && y == 32");
     }
 
     /**
