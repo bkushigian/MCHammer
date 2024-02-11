@@ -94,7 +94,7 @@ public class PredicateVisitorTest {
     }
 
     @Test
-    public void testVisiteExpression02() {
+    public void testVisitExpression02() {
         String expr = "x <= y && y == z || x*x <= 32 || x == y * y";
         Expression e = StaticJavaParser.parseExpression(expr);
         PredicateVisitor v = new PredicateVisitor();
