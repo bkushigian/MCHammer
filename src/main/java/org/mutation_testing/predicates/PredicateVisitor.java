@@ -5,7 +5,10 @@ import java.util.List;
 
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.expr.BinaryExpr;
+import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
+import com.github.javaparser.resolution.types.ResolvedType;
 
 /**
  * A visitor to collect all relations within a tree.
@@ -36,5 +39,30 @@ public class PredicateVisitor extends VoidVisitorAdapter<List<Predicate>> {
             default:
         }
         super.visit(n, arg);
+    }
+
+    @Override
+    public void visit(MethodCallExpr n, List<Predicate> arg) {
+        if (isBooleanType(n.resolve().getReturnType())) {
+            arg.add(new MethodCallPredicate(n));
+            return;
+        }
+
+        super.visit(n, arg);
+    }
+
+    @Override
+    public void visit(NameExpr n, List<Predicate> arg) {
+        if (isBooleanType(n.resolve().getType())) {
+            arg.add(new NamePredicate(n));
+            return;
+        }
+
+        super.visit(n, arg);
+    }
+
+    boolean isBooleanType(ResolvedType tp) {
+        return tp.isPrimitive() && tp.asPrimitive().isBoolean()
+                || tp.isReferenceType() && tp.asReferenceType().getQualifiedName().equals("java.lang.Boolean");
     }
 }
