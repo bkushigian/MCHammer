@@ -20,7 +20,7 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.IntegerLiteralExpr;
 
-public class RelationalVisitorTest {
+public class PredicateVisitorTest {
     @Test
     public void testVisitMethodDecl() {
         String prog = "class A { boolean m(int x) { return x >= 32 && x < 127; } }";
