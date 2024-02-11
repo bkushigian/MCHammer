@@ -12,13 +12,16 @@ import com.github.javaparser.resolution.types.ResolvedType;
 
 /**
  * A visitor to collect all relations within a tree.
+ * 
+ * This visitor performs Symbol Resolution and a symbol solver must be set up
+ * before parsing.
  */
 public class PredicateVisitor extends VoidVisitorAdapter<List<Predicate>> {
     String currentMethod = null;
 
-    public List<Predicate> collectRelations(Node node) {
+    public static List<Predicate> collectPredicates(Node n) {
         List<Predicate> predicates = new ArrayList<>();
-        node.accept(this, predicates);
+        n.accept(new PredicateVisitor(), predicates);
         return predicates;
     }
 

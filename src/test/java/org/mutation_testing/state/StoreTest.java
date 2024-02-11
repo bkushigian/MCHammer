@@ -112,7 +112,7 @@ public class StoreTest {
     protected Store storeFromExpr(String expr, String... args) {
         String prog = TestUtils.makeClass(expr, args);
         CompilationUnit cu = StaticJavaParser.parse(prog);
-        return new Store(rv.collectRelations(cu));
+        return new Store(rv.collectPredicates(cu));
     }
 
 }
