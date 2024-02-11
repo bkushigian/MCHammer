@@ -17,7 +17,6 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSol
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 
 public class StoreTest {
-    PredicateVisitor rv = new PredicateVisitor();
 
     @Before
     public void setUp() throws Exception {
@@ -112,7 +111,7 @@ public class StoreTest {
     protected Store storeFromExpr(String expr, String... args) {
         String prog = TestUtils.makeClass(expr, args);
         CompilationUnit cu = StaticJavaParser.parse(prog);
-        return new Store(rv.collectPredicates(cu));
+        return new Store(PredicateVisitor.collectPredicates(cu));
     }
 
 }
