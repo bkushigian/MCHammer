@@ -7,7 +7,7 @@ import java.util.Map;
 
 import org.mutation_testing.Source;
 import org.mutation_testing.predicates.Relation;
-import org.mutation_testing.predicates.RelationalVisitor;
+import org.mutation_testing.predicates.PredicateVisitor;
 import org.mutation_testing.state.Store;
 import org.mutation_testing.visitors.ExpressionPropertyVisitor;
 import org.mutation_testing.visitors.ExpressionPropertyVisitor.Properties;
@@ -42,7 +42,7 @@ public class Mutator extends VoidVisitorAdapter<Void> {
     protected Source source;
 
     protected ExpressionPropertyVisitor epv = new ExpressionPropertyVisitor();
-    protected RelationalVisitor rv = new RelationalVisitor();
+    protected PredicateVisitor rv = new PredicateVisitor();
 
     protected TypeSolver typeSolver = new CombinedTypeSolver();
     protected JavaSymbolSolver symbolSolver = new JavaSymbolSolver(typeSolver);

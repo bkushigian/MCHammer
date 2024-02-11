@@ -6,8 +6,8 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mutation_testing.relation.RelationalVisitor;
 import org.mutation_testing.TestUtils;
+import org.mutation_testing.predicates.PredicateVisitor;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
@@ -17,7 +17,7 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSol
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 
 public class StoreTest {
-    RelationalVisitor rv = new RelationalVisitor();
+    PredicateVisitor rv = new PredicateVisitor();
 
     @Before
     public void setUp() throws Exception {

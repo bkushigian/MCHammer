@@ -10,7 +10,7 @@ import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 /**
  * A visitor to collect all relations within a tree.
  */
-public class RelationalVisitor extends VoidVisitorAdapter<List<Relation>> {
+public class PredicateVisitor extends VoidVisitorAdapter<List<Relation>> {
     String currentMethod = null;
 
     public List<Relation> collectRelations(Node node) {

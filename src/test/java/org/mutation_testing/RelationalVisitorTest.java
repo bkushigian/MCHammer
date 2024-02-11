@@ -8,12 +8,12 @@ import java.util.List;
 
 
 import org.junit.Test;
-import org.mutation_testing.relation.ExprLiteralRelation;
-import org.mutation_testing.relation.ExprNameRelation;
-import org.mutation_testing.relation.NameLiteralRelation;
-import org.mutation_testing.relation.NameNameRelation;
-import org.mutation_testing.relation.Relation;
-import org.mutation_testing.relation.RelationalVisitor;
+import org.mutation_testing.predicates.ExprLiteralRelation;
+import org.mutation_testing.predicates.ExprNameRelation;
+import org.mutation_testing.predicates.NameLiteralRelation;
+import org.mutation_testing.predicates.NameNameRelation;
+import org.mutation_testing.predicates.Relation;
+import org.mutation_testing.predicates.PredicateVisitor;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
@@ -25,7 +25,7 @@ public class RelationalVisitorTest {
     public void testVisitMethodDecl() {
         String prog = "class A { boolean m(int x) { return x >= 32 && x < 127; } }";
         CompilationUnit cu = StaticJavaParser.parse(prog);
-        RelationalVisitor v = new RelationalVisitor();
+        PredicateVisitor v = new PredicateVisitor();
         List<Relation> relations = v.collectRelations(cu);
         assertEquals(2, relations.size());
 
@@ -50,7 +50,7 @@ public class RelationalVisitorTest {
     public void testVisitExpression01() {
         String expr = "x <= 32 || (x == 127 && y > 64) || (z <= 64 && y != 32)";
         Expression e = StaticJavaParser.parseExpression(expr);
-        RelationalVisitor v = new RelationalVisitor();
+        PredicateVisitor v = new PredicateVisitor();
         List<Relation> relations = v.collectRelations(e);
 
         assertEquals(5, relations.size());
@@ -95,7 +95,7 @@ public class RelationalVisitorTest {
     public void testVisiteExpression02() {
         String expr = "x <= y && y == z || x*x <= 32 || x == y * y";
         Expression e = StaticJavaParser.parseExpression(expr);
-        RelationalVisitor v = new RelationalVisitor();
+        PredicateVisitor v = new PredicateVisitor();
         List<Relation> relations = v.collectRelations(e);
         assertEquals(4, relations.size());
 
