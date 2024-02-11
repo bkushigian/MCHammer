@@ -5,7 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
-
+import java.util.stream.Collectors;
 
 import org.junit.Test;
 import org.mutation_testing.predicates.ExprLiteralRelation;
@@ -26,7 +26,8 @@ public class RelationalVisitorTest {
         String prog = "class A { boolean m(int x) { return x >= 32 && x < 127; } }";
         CompilationUnit cu = StaticJavaParser.parse(prog);
         PredicateVisitor v = new PredicateVisitor();
-        List<Relation> relations = v.collectRelations(cu);
+        List<Relation> relations = v.collectRelations(cu).stream()
+                .map(p -> p.asRelation()).collect(Collectors.toList());
         assertEquals(2, relations.size());
 
         assertTrue(relations.get(0).isNameLiteralRelation());
@@ -51,7 +52,8 @@ public class RelationalVisitorTest {
         String expr = "x <= 32 || (x == 127 && y > 64) || (z <= 64 && y != 32)";
         Expression e = StaticJavaParser.parseExpression(expr);
         PredicateVisitor v = new PredicateVisitor();
-        List<Relation> relations = v.collectRelations(e);
+        List<Relation> relations = v.collectRelations(e).stream()
+                .map(p -> p.asRelation()).collect(Collectors.toList());
 
         assertEquals(5, relations.size());
 
@@ -96,7 +98,8 @@ public class RelationalVisitorTest {
         String expr = "x <= y && y == z || x*x <= 32 || x == y * y";
         Expression e = StaticJavaParser.parseExpression(expr);
         PredicateVisitor v = new PredicateVisitor();
-        List<Relation> relations = v.collectRelations(e);
+        List<Relation> relations = v.collectRelations(e).stream()
+                .map(p -> p.asRelation()).collect(Collectors.toList());
         assertEquals(4, relations.size());
 
         NameNameRelation r0 = relations.get(0).asNameNameRelation();

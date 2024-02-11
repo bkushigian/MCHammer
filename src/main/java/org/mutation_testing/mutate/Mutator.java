@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.mutation_testing.Source;
-import org.mutation_testing.predicates.Relation;
+import org.mutation_testing.predicates.Predicate;
 import org.mutation_testing.predicates.PredicateVisitor;
 import org.mutation_testing.state.Store;
 import org.mutation_testing.visitors.ExpressionPropertyVisitor;
@@ -160,10 +160,10 @@ public class Mutator extends VoidVisitorAdapter<Void> {
         assert ps.isPure();
         assert !ps.hasUnhandledProperties();
 
-        List<Relation> relations = new ArrayList<>();
+        List<Predicate> relations = new ArrayList<>();
         n.accept(rv, relations);
-        Store store = new Store(relations);
-        List<Expression> product = store.getProductConditions();
+        Store s = new Store(relations);
+        List<Expression> product = s.getProductConditions();
         for (Expression condition : product) {
             addMutantFromCondition(n, condition);
         }

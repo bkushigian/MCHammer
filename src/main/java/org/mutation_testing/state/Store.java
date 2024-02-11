@@ -12,6 +12,7 @@ import org.mutation_testing.predicates.ExprNameRelation;
 import org.mutation_testing.predicates.LiteralLiteralRelation;
 import org.mutation_testing.predicates.NameLiteralRelation;
 import org.mutation_testing.predicates.NameNameRelation;
+import org.mutation_testing.predicates.Predicate;
 import org.mutation_testing.predicates.Relation;
 
 import com.github.javaparser.ast.expr.BinaryExpr;
@@ -51,9 +52,12 @@ public class Store {
         miscStore = new HashMap<>();
     }
 
-    public Store(List<Relation> relations) {
+    public Store(List<Predicate> predicates) {
         this();
-        for (Relation relation : relations) {
+        for (Predicate predicate : predicates) {
+            // TODO: Fix
+            // Temporarily assume all predicates are relations
+            Relation relation = predicate.asRelation();
             addRelation(relation);
         }
     }

@@ -3,7 +3,7 @@ package org.mutation_testing.predicates;
 import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.Expression;
 
-public abstract class Relation {
+public abstract class Relation extends Predicate {
     protected boolean isOrdered;
     protected RelationType relationType;
     protected BinaryExpr relationNode;
@@ -89,6 +89,16 @@ public abstract class Relation {
             default:
                 return false;
         }
+    }
+
+    @Override
+    public boolean isRelation() {
+        return true;
+    }
+
+    @Override
+    public Relation asRelation() {
+        return this;
     }
 
     public boolean isNameNameRelation() {

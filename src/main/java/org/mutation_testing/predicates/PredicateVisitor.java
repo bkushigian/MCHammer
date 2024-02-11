@@ -10,18 +10,18 @@ import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 /**
  * A visitor to collect all relations within a tree.
  */
-public class PredicateVisitor extends VoidVisitorAdapter<List<Relation>> {
+public class PredicateVisitor extends VoidVisitorAdapter<List<Predicate>> {
     String currentMethod = null;
 
-    public List<Relation> collectRelations(Node node) {
-        List<Relation> relations = new ArrayList<>();
-        node.accept(this, relations);
-        return relations;
+    public List<Predicate> collectRelations(Node node) {
+        List<Predicate> predicates = new ArrayList<>();
+        node.accept(this, predicates);
+        return predicates;
     }
 
 
     @Override
-    public void visit(BinaryExpr n, List<Relation> arg) {
+    public void visit(BinaryExpr n, List<Predicate> arg) {
         switch (n.getOperator()) {
             case EQUALS:
             case NOT_EQUALS:
