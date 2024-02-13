@@ -12,6 +12,7 @@ import org.mutation_testing.predicates.PredicateVisitor;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
@@ -68,7 +69,6 @@ public class StoreTest {
         List<Expression> product = store.getProductConditions();
         printProduct(exprString, store, product);
         assertEquals(9, product.size());
-
     }
 
     @Test
@@ -78,6 +78,19 @@ public class StoreTest {
         List<Expression> product = store.getProductConditions();
         printProduct(exprString, store, product);
         assertEquals(4, product.size());
+    }
+
+    @Test
+    public void testStoreFromStringPredicate() {
+        String exprString = "x.equals(\"hello\")";
+        Store store = storeFromExpr(exprString, "String x");
+        StoreState xState = store.localStore.get("x");
+        assertTrue(xState instanceof StringStoreState);
+        StringStoreState state = (StringStoreState) xState;
+        assertEquals(1, state.methodPredicates.size());
+        List<Expression> conditions = state.getConditions(new NameExpr("x"));
+        assertEquals(2, conditions.size());
+        
     }
 
     /**

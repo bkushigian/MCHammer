@@ -32,6 +32,23 @@ public class MutatorTest {
                 "x == 32 && y == 32");
     }
 
+    @Test
+    public void testMutate04() {
+        String prog = TestUtils.makeClass("s.equals(\"foo\")", "String s");
+        System.out.println("Program:\n" + prog);
+        assertExpectedMutationConditions(prog, "s.equals(\"foo\")", "!s.equals(\"foo\")");
+    }
+
+    @Test
+    public void testMutate05() {
+        String prog = TestUtils.makeClass("s.equals(\"foo\") || t.startsWith(\"bar\")", "String s", "String t");
+        assertExpectedMutationConditions(prog,
+                "s.equals(\"foo\") && t.startsWith(\"bar\")",
+                "s.equals(\"foo\") && !t.startsWith(\"bar\")",
+                "!s.equals(\"foo\") && t.startsWith(\"bar\")",
+                "!s.equals(\"foo\") && !t.startsWith(\"bar\")");
+    }
+
     /**
      * Assert that the returned mutation conditions are as expected.
      * 
@@ -39,7 +56,9 @@ public class MutatorTest {
      * @param expected
      */
     private void assertExpectedMutationConditions(String prog, String... expectedConditions) {
-        List<Mutant> mutants = new Mutator().mutate("A.java", prog);
+        System.out.println("Mutating: " + prog);
+        List<Mutant> mutants = new Mutator().mutate("TestClass.java", prog);
+        System.out.println("Mutants: " + mutants.size() + " " + mutants);
 
         // Compare the {@code toString} of the mutation conditions: the literal
         // types from the mutants don't always align with what the

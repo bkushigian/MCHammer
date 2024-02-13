@@ -24,7 +24,7 @@ class IntStoreState extends StoreState {
     }
 
     @Override
-    List<Expression> asConditions(Expression expr) {
+    List<Expression> getTypeSpecificConditions(Expression expr) {
         List<Expression> conditions = new ArrayList<>();
         conditions.addAll(intervals.asConditions(expr));
         for (BinaryExpr relation : additionalRelations) {
