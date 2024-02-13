@@ -67,11 +67,9 @@ public class Store {
         return StateProduct.getProductConditions(localStore);
     }
 
-
     static final int UNKNOWN = 0;
     static final int ORDERED = 1;
     static final int UNORDERED = 2;
-
 
     Long getLongValueFromLiteral(LiteralExpr lit) {
         if (lit.isIntegerLiteralExpr()) {
@@ -87,6 +85,7 @@ public class Store {
 
     /**
      * A helper function that adds a primitive to the store
+     * 
      * @param relation
      * @param typ
      * @return
@@ -95,14 +94,13 @@ public class Store {
         NameExpr nameExpr = relation.getName();
         LiteralExpr lit = relation.getLiteral();
 
-        System.out.println("Type: " + typ.name());
-
         switch (typ.name()) {
             case "INT":
             case "LONG":
             case "CHAR":
             case "SHORT":
-                IntStoreState state = (IntStoreState) localStore.computeIfAbsent(nameExpr.getNameAsString(), k -> new IntStoreState(typ));
+                IntStoreState state = (IntStoreState) localStore.computeIfAbsent(nameExpr.getNameAsString(),
+                        k -> new IntStoreState(typ));
                 Long value = getLongValueFromLiteral(lit);
                 if (relation.isOrdered()) {
                     state.intervals.splitAt(value);
@@ -122,6 +120,7 @@ public class Store {
 
     /**
      * A helper function that adds a reference to the store
+     * 
      * @param relation
      * @param typ
      * @return
@@ -130,8 +129,9 @@ public class Store {
         NameExpr nameExpr = relation.getName();
 
         if ("java.lang.String".equals(typ.getQualifiedName())) {
-            StringStoreState state = (StringStoreState) localStore.computeIfAbsent(nameExpr.getNameAsString(), k -> new StringStoreState(typ));
-            if (relation.getLiteral().isStringLiteralExpr()){
+            StringStoreState state = (StringStoreState) localStore.computeIfAbsent(nameExpr.getNameAsString(),
+                    k -> new StringStoreState(typ));
+            if (relation.getLiteral().isStringLiteralExpr()) {
                 state.compareValue(relation.getLiteral().asStringLiteralExpr());
             }
             return state;
@@ -191,7 +191,7 @@ public class Store {
     }
 
     void addMethodCallPredicate(MethodCallPredicate predicate) {
-        Expression scope =  predicate.getScope().orElse(null);
+        Expression scope = predicate.getScope().orElse(null);
         if (scope == null) {
             System.err.println("Unscoped method call: " + predicate.getMethodCall());
             unscopedMethodCalls.add(predicate);
@@ -246,6 +246,7 @@ public class Store {
 
     /**
      * Get a store state for a resolved type t
+     * 
      * @param t
      * @return
      */
