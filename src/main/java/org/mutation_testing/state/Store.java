@@ -23,7 +23,6 @@ import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.LiteralExpr;
 import com.github.javaparser.ast.expr.NameExpr;
-import com.github.javaparser.ast.expr.StringLiteralExpr;
 
 /**
  * This stores abstract values for parameters, fields, local variables, etc
