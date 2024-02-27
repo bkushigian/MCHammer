@@ -3,33 +3,27 @@ package org.mutation_testing.state;
 import static org.junit.Assert.*;
 
 import java.util.List;
-import java.util.StringJoiner;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mutation_testing.relation.RelationalVisitor;
+import org.mutation_testing.TestUtils;
+import org.mutation_testing.predicates.PredicateVisitor;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 
 public class StoreTest {
-    RelationalVisitor rv = new RelationalVisitor();
 
     @Before
     public void setUp() throws Exception {
         CombinedTypeSolver typeSolver = new CombinedTypeSolver();
         typeSolver.add(new ReflectionTypeSolver());
         StaticJavaParser.getParserConfiguration().setSymbolResolver(new JavaSymbolSolver(typeSolver));
-    }
-
-    protected Store storeFromExpr(String expr, String...args) {
-        String prog = makeClass(expr, args);
-        CompilationUnit cu = StaticJavaParser.parse(prog);
-        return new Store(rv.collectRelations(cu));
     }
 
     @Test
@@ -75,30 +69,37 @@ public class StoreTest {
         List<Expression> product = store.getProductConditions();
         printProduct(exprString, store, product);
         assertEquals(9, product.size());
-
     }
 
-    String makeClass(String expr, String...args) {
-        StringJoiner argJoiner = new StringJoiner(", ");
-        for (String arg : args) {
-            argJoiner.add(arg);
-        }
-        return "class TestClass {\n" +
-            "boolean f(" + argJoiner + ") {\n" +
-            "return " + expr + ";\n" +
-            "}\n" +
-            "}";
-    }
-
-    @Test public void testStoreTypes() {
+    @Test
+    public void testStoreTypes() {
         String exprString = "x == 1 || x > 5";
         Store store = storeFromExpr(exprString, "int x");
         List<Expression> product = store.getProductConditions();
         printProduct(exprString, store, product);
         assertEquals(4, product.size());
-
     }
 
+    @Test
+    public void testStoreFromStringPredicate() {
+        String exprString = "x.equals(\"hello\")";
+        Store store = storeFromExpr(exprString, "String x");
+        StoreState xState = store.localStore.get("x");
+        assertTrue(xState instanceof StringStoreState);
+        StringStoreState state = (StringStoreState) xState;
+        assertEquals(1, state.methodPredicates.size());
+        List<Expression> conditions = state.getConditions(new NameExpr("x"));
+        assertEquals(2, conditions.size());
+        
+    }
+
+    /**
+     * Print the result of collecting the product of spaces from a {@code Store}
+     * 
+     * @param exprString
+     * @param store
+     * @param product
+     */
     void printProduct(String exprString, Store store, List<Expression> product) {
         System.out.println("\n\n---- TEST CASE SUMMARY ----");
         System.out.println("[[ expr: " + exprString + " ]]");
@@ -107,6 +108,23 @@ public class StoreTest {
         for (Expression e : product) {
             System.out.println(" - " + e);
         }
+    }
+
+    /**
+     * Create a {@code Store} from a given expression and arguments/types.
+     * For instance, calling {@code storeFromExpr("x == 1 || x > 5", "int x")}
+     * will return a Store for the expression {@code x == 1 || x > 5} where x is
+     * an integer.
+     * 
+     * @param expr the expression to parse
+     * @param args the types of each variable in the expression in the form "TYPE
+     *             VARIABLE". For instance: "int x", "int y", "char c"
+     * @return a {@code Store} for the given expression
+     */
+    protected Store storeFromExpr(String expr, String... args) {
+        String prog = TestUtils.makeClass(expr, args);
+        CompilationUnit cu = StaticJavaParser.parse(prog);
+        return new Store(PredicateVisitor.collectPredicates(cu));
     }
 
 }

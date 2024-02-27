@@ -6,11 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.mutation_testing.Source;
-import org.mutation_testing.relation.Relation;
-import org.mutation_testing.relation.RelationalVisitor;
+import org.mutation_testing.predicates.Predicate;
+import org.mutation_testing.predicates.PredicateVisitor;
 import org.mutation_testing.state.Store;
 import org.mutation_testing.visitors.ExpressionPropertyVisitor;
-import org.mutation_testing.visitors.ExpressionPropertyVisitor.Properties;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -30,21 +29,23 @@ import com.github.javaparser.ast.expr.EnclosedExpr;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.IntegerLiteralExpr;
 import com.github.javaparser.ast.expr.LongLiteralExpr;
+import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.UnaryExpr;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.resolution.TypeSolver;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 
 public class Mutator extends VoidVisitorAdapter<Void> {
     protected int mid = 1;
     protected Source source;
 
     protected ExpressionPropertyVisitor epv = new ExpressionPropertyVisitor();
-    protected RelationalVisitor rv = new RelationalVisitor();
+    protected PredicateVisitor pv = new PredicateVisitor();
 
-    protected TypeSolver typeSolver = new CombinedTypeSolver();
+    protected TypeSolver typeSolver = new CombinedTypeSolver(new ReflectionTypeSolver());
     protected JavaSymbolSolver symbolSolver = new JavaSymbolSolver(typeSolver);
 
     public Mutator() {
@@ -55,10 +56,6 @@ public class Mutator extends VoidVisitorAdapter<Void> {
      * Mutants for the current file
      */
     protected List<Mutant> mutants = new ArrayList<>();
-
-    protected boolean ready() {
-        return source == null;
-    }
 
     protected void cleanup() {
         source = null;
@@ -72,9 +69,6 @@ public class Mutator extends VoidVisitorAdapter<Void> {
     }
 
     public List<Mutant> mutate(String filename, String fileContents) {
-        if (!ready()) {
-            throw new IllegalStateException("Cannot mutate file while mutating another file");
-        }
 
         this.source = new Source(filename, fileContents);
         mutants = new ArrayList<>();
@@ -114,6 +108,12 @@ public class Mutator extends VoidVisitorAdapter<Void> {
         return null;
     }
 
+    /**
+     * Add a mutant that differs from the original expression if and only if the
+     * mutation condition is satisfied
+     * @param originalExpr
+     * @param mutationCondition
+     */
     protected void addMutantFromCondition(Expression originalExpr, Expression mutationCondition) {
         Expression mutatedExpr = getInfectingExpression(originalExpr);
         Expression clonedOriginalExpr = new EnclosedExpr(originalExpr.clone());
@@ -123,11 +123,11 @@ public class Mutator extends VoidVisitorAdapter<Void> {
         }
         Expression repl = new ConditionalExpr(new EnclosedExpr(mutationCondition), mutatedExpr, clonedOriginalExpr);
         repl = new EnclosedExpr(repl);
-        addMutant(originalExpr, repl);
+        addAbstractValueMutant(originalExpr, repl, mutationCondition);
     }
 
-    protected void addMutant(Expression orig, Expression repl) {
-        Mutant mutant = new Mutant(mid, source, orig, repl);
+    protected void addAbstractValueMutant(Expression orig, Expression repl, Expression mutationCondition) {
+        Mutant mutant = new Mutant(mid, source, orig, repl, mutationCondition);
         mutants.add(mutant);
         mid += 1;
     }
@@ -158,19 +158,30 @@ public class Mutator extends VoidVisitorAdapter<Void> {
         // The fact that we are visiting means that there is no enclosing
         // expression that has already been mutated.
 
-        Properties ps = n.accept(epv, null);
+        // Properties ps = n.accept(epv, null);
 
-        if (ps == null || !ps.canMutate()) {
-            super.visit(n, arg);
-            return;
+        // if (ps == null || !ps.canMutate()) {
+        //     super.visit(n, arg);
+        //     return;
+        // }
+        // assert ps.isPure();
+        // assert !ps.hasUnhandledProperties();
+
+        List<Predicate> predicates = PredicateVisitor.collectPredicates(n);
+        Store s = new Store(predicates);
+        List<Expression> product = s.getProductConditions();
+        for (Expression condition : product) {
+            addMutantFromCondition(n, condition);
         }
-        assert ps.isPure();
-        assert !ps.hasUnhandledProperties();
+    }
 
-        List<Relation> relations = new ArrayList<>();
-        n.accept(rv, relations);
-        Store store = new Store(relations);
-        List<Expression> product = store.getProductConditions();
+    @Override
+    public void visit(MethodCallExpr n, Void arg) {
+        List<Predicate> predicates = PredicateVisitor.collectPredicates(n);
+        Store s = new Store(predicates);
+        List<Expression> product = s.getProductConditions();
+        System.out.println("Predicates: " + predicates);
+        System.out.println("Product: " + product);
         for (Expression condition : product) {
             addMutantFromCondition(n, condition);
         }

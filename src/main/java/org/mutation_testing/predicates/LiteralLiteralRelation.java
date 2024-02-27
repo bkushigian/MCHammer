@@ -1,4 +1,4 @@
-package org.mutation_testing.relation;
+package org.mutation_testing.predicates;
 
 import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.LiteralExpr;
