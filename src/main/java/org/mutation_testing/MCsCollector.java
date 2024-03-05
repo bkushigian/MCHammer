@@ -70,15 +70,20 @@ public class MCsCollector extends GenericVisitorAdapter<MCs, MCs> {
 
     public MCs visit(BinaryExpr n, MCs arg) {
         switch (n.getOperator()) {
-            case AND:
+            case AND: {
+                MCs left = n.getLeft().accept(this, arg); // Condition after left
+                MCs rightPC = left.refine(predicates(n.getLeft()));
+                MCs right = n.getRight().accept(this, rightPC);
+                return join(left, right);
+            }
             case OR: {
-                MCs left = n.getLeft().accept(this, arg);
-                MCs right = n.getRight().accept(this, arg);
-                return left.refine(right);
+                MCs left = n.getLeft().accept(this, arg); // Condition after left
+                MCs rightPC = left.refine(predicates(neg(n.getLeft())));
+                MCs right = n.getRight().accept(this, rightPC);
+                return join(left, right);
             }
             case EQUALS:
             case NOT_EQUALS: {
-                // TODO: Handle like if/else with a join
                 MCs left = n.getLeft().accept(this, arg);
                 MCs right = n.getRight().accept(this, arg);
                 MCs both = eqPredicates(n.getLeft(), n.getRight());
@@ -89,7 +94,8 @@ public class MCsCollector extends GenericVisitorAdapter<MCs, MCs> {
             case LESS:
             case LESS_EQUALS: {
                 MCs left = n.getLeft().accept(this, arg);
-                MCs right = n.getRight().accept(this, left);
+                MCs rightPC = arg.refine(left);
+                MCs right = n.getRight().accept(this, rightPC);
                 MCs both = orderPredicates(n.getLeft(), n.getRight());
                 return left.refine(right).refine(both);
             }
