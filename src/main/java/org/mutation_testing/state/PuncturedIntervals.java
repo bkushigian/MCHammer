@@ -9,7 +9,7 @@ import com.github.javaparser.ast.expr.LongLiteralExpr;
 import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.expr.SimpleName;
 
-public class PuncturedIntervals implements AbstractStates {
+public class PuncturedIntervals {
 
     List<PuncturedIntervals.Interval> intervals;
 
@@ -45,7 +45,6 @@ public class PuncturedIntervals implements AbstractStates {
         intervals = newIntervals;
     }
 
-    @Override
     public List<Expression> asConditions(Expression expr) {
         List<Expression> conditions = new ArrayList<>();
         for (PuncturedIntervals.Interval interval : intervals) {
@@ -55,7 +54,6 @@ public class PuncturedIntervals implements AbstractStates {
         return conditions;
     }
 
-    @Override
     public List<String> asStringConditions(String variableName) {
         List<String> stringConditions = new ArrayList<>();
         List<Expression> conditions = asConditions(new NameExpr(new SimpleName(variableName)));

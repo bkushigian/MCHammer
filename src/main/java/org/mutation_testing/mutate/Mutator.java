@@ -6,11 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.mutation_testing.Source;
-import org.mutation_testing.relation.Relation;
-import org.mutation_testing.relation.RelationalVisitor;
-import org.mutation_testing.state.Store;
-import org.mutation_testing.visitors.ExpressionPropertyVisitor;
-import org.mutation_testing.visitors.ExpressionPropertyVisitor.Properties;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -40,9 +35,6 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSol
 public class Mutator extends VoidVisitorAdapter<Void> {
     protected int mid = 1;
     protected Source source;
-
-    protected ExpressionPropertyVisitor epv = new ExpressionPropertyVisitor();
-    protected RelationalVisitor rv = new RelationalVisitor();
 
     protected TypeSolver typeSolver = new CombinedTypeSolver();
     protected JavaSymbolSolver symbolSolver = new JavaSymbolSolver(typeSolver);
@@ -155,24 +147,5 @@ public class Mutator extends VoidVisitorAdapter<Void> {
 
     @Override
     public void visit(BinaryExpr n, Void arg) {
-        // The fact that we are visiting means that there is no enclosing
-        // expression that has already been mutated.
-
-        Properties ps = n.accept(epv, null);
-
-        if (ps == null || !ps.canMutate()) {
-            super.visit(n, arg);
-            return;
-        }
-        assert ps.isPure();
-        assert !ps.hasUnhandledProperties();
-
-        List<Relation> relations = new ArrayList<>();
-        n.accept(rv, relations);
-        Store store = new Store(relations);
-        List<Expression> product = store.getProductConditions();
-        for (Expression condition : product) {
-            addMutantFromCondition(n, condition);
-        }
     }
 }
