@@ -3,20 +3,33 @@ package org.mutation_testing;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.BinaryExpr;
+import com.github.javaparser.ast.expr.BooleanLiteralExpr;
+import com.github.javaparser.ast.expr.CharLiteralExpr;
+import com.github.javaparser.ast.expr.DoubleLiteralExpr;
 import com.github.javaparser.ast.expr.EnclosedExpr;
 import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.IntegerLiteralExpr;
+import com.github.javaparser.ast.expr.LongLiteralExpr;
+import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.expr.NameExpr;
+import com.github.javaparser.ast.expr.NullLiteralExpr;
+import com.github.javaparser.ast.expr.SimpleName;
+import com.github.javaparser.ast.expr.StringLiteralExpr;
+import com.github.javaparser.ast.expr.TextBlockLiteralExpr;
 import com.github.javaparser.ast.expr.UnaryExpr;
 import com.github.javaparser.ast.stmt.BlockStmt;
+import com.github.javaparser.ast.stmt.ExpressionStmt;
 import com.github.javaparser.ast.stmt.IfStmt;
 import com.github.javaparser.ast.stmt.ReturnStmt;
 import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
-
-import static org.mutation_testing.MCs.predicates;
+import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
+import com.github.javaparser.resolution.types.ResolvedType;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.mutation_testing.MCs.predicates;
 import static org.mutation_testing.MCs.FALSE;
 import static org.mutation_testing.MCs.TRUE;
 import static org.mutation_testing.MCs.join;
@@ -27,7 +40,7 @@ public class MCsCollector extends GenericVisitorAdapter<MCs, MCs> {
 
     @Override
     public MCs visit(MethodDeclaration n, MCs arg) {
-        throw new NotImplementedException("Invoke 'collectMutationConditions' directly");
+        return super.visit(n, arg);
     }
 
     public MCs collectMutationConditions(MethodDeclaration n) {
@@ -43,11 +56,20 @@ public class MCsCollector extends GenericVisitorAdapter<MCs, MCs> {
         for (Statement stmt : n.getStatements()) {
             cond = cond.refine(stmt.accept(this, cond));
         }
+        // Check if this is the end of the method and if the last statement not
+        // is a return. If so we want toadd the condition to endBlock
+        if (n.getParentNode().isPresent() &&
+                n.getParentNode().get() instanceof MethodDeclaration &&
+                n.getStatements().getLast().isPresent() &&
+                !(n.getStatements().getLast().get() instanceof ReturnStmt)) {
+            endBlock.put(cond, n);
+        }
         return cond;
     }
 
     @Override
     public MCs visit(IfStmt n, MCs arg) {
+        // First refine states based on condition
         MCs conditionResult = n.getCondition().accept(this, arg);
         MCs condTrue = predicates(n.getCondition().clone());
         MCs condFalse = predicates(neg(n.getCondition()));
@@ -57,7 +79,7 @@ public class MCsCollector extends GenericVisitorAdapter<MCs, MCs> {
                     conditionResult.refine(condFalse));
             return join(thenResult, elseResult);
         } else {
-            return join(thenResult, condFalse);
+            return join(thenResult, conditionResult.refine(condFalse));
         }
     }
 
@@ -105,12 +127,81 @@ public class MCsCollector extends GenericVisitorAdapter<MCs, MCs> {
         }
     }
 
+    @Override
+    public MCs visit(ExpressionStmt n, MCs arg) {
+        return super.visit(n, arg);
+    }
+
+    @Override
+    public MCs visit(MethodCallExpr n, MCs arg) {
+        ResolvedMethodDeclaration r = n.resolve();
+        ResolvedType rt = r.getReturnType();
+        MCs mcs = super.visit(n, arg);
+        if (rt.isReferenceType() && rt.asReferenceType().getQualifiedName().equals("java.lang.Boolean")) {
+            return mcs.refine(trueFalsePredicates(n));
+        }
+        return mcs;
+    }
+
     public MCs visit(UnaryExpr n, MCs arg) {
 
         if (n.getOperator() == UnaryExpr.Operator.LOGICAL_COMPLEMENT) {
             MCs result = n.getExpression().accept(this, arg);
-            return result.refine(negPredicates(n.getExpression()));
+            return result.refine(trueFalsePredicates(n.getExpression()));
         }
+        return arg;
+    }
+
+    @Override
+    public MCs visit(NameExpr n, MCs arg) {
+        if (isBoolean(n.calculateResolvedType())) {
+            return arg.refine(trueFalsePredicates(n));
+        }
+        return arg;
+    }
+
+    @Override
+    public MCs visit(SimpleName n, MCs arg) {
+        return arg;
+    }
+
+    @Override
+    public MCs visit(LongLiteralExpr n, MCs arg) {
+        return arg;
+    }
+
+    @Override
+    public MCs visit(NullLiteralExpr n, MCs arg) {
+        return arg;
+    }
+
+    @Override
+    public MCs visit(CharLiteralExpr n, MCs arg) {
+        return arg;
+    }
+
+    @Override
+    public MCs visit(StringLiteralExpr n, MCs arg) {
+        return arg;
+    }
+
+    @Override
+    public MCs visit(DoubleLiteralExpr n, MCs arg) {
+        return arg;
+    }
+
+    @Override
+    public MCs visit(IntegerLiteralExpr n, MCs arg) {
+        return arg;
+    }
+
+    @Override
+    public MCs visit(BooleanLiteralExpr n, MCs arg) {
+        return arg;
+    }
+
+    @Override
+    public MCs visit(TextBlockLiteralExpr n, MCs arg) {
         return arg;
     }
 
@@ -127,7 +218,7 @@ public class MCsCollector extends GenericVisitorAdapter<MCs, MCs> {
                 gt(left.clone(), right.clone()));
     }
 
-    public static MCs.Predicates negPredicates(Expression expr) {
+    public static MCs.Predicates trueFalsePredicates(Expression expr) {
         return predicates(expr.clone(), neg(expr.clone()));
     }
 
@@ -201,5 +292,10 @@ public class MCsCollector extends GenericVisitorAdapter<MCs, MCs> {
             return new UnaryExpr(expr.clone(), UnaryExpr.Operator.LOGICAL_COMPLEMENT);
         }
         return new UnaryExpr(expr.clone(), UnaryExpr.Operator.LOGICAL_COMPLEMENT);
+    }
+
+    boolean isBoolean(ResolvedType t) {
+        return t.isPrimitive() && t.asPrimitive().isBoolean()
+                || t.isReferenceType() && t.asReferenceType().getQualifiedName().equals("java.lang.Boolean");
     }
 }
