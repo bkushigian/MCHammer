@@ -4,11 +4,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.StringJoiner;
+
+import org.mutation_testing.smt.SMTConstraintGenerator;
 
 import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.BooleanLiteralExpr;
 import com.github.javaparser.ast.expr.Expression;
+import com.microsoft.z3.BoolSort;
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Expr;
+import com.microsoft.z3.Solver;
+import com.microsoft.z3.Sort;
+import com.microsoft.z3.Status;
 
 /**
  * Mutation Conditions
@@ -81,6 +90,31 @@ public abstract class MCs {
 
     public abstract List<Expression> toConditions();
 
+    public List<Expression> toSATConditions() {
+        Context ctx = new Context();
+        Solver solver = ctx.mkSolver();
+        List<Expression> result = new ArrayList<>();
+        List <Expression> conditions = toConditions();
+        List<Expression> simplifiedConditions = new ArrayList<>();
+        for (Expression condition : conditions) {
+            Expression simplifiedCondition = MCsOptimizer.simplifyConjunction(condition);
+            simplifiedConditions.add(simplifiedCondition);
+        }
+        for (Expression e : simplifiedConditions) {
+            solver.push();
+
+            Expr<? extends Sort> constraints = SMTConstraintGenerator.generateConstraints(e, ctx);
+            solver.add((Expr<BoolSort>)constraints);
+            Status status = solver.check();
+            if (status == Status.SATISFIABLE){
+                result.add(e);
+            }
+            solver.pop();
+        }
+        ctx.close();
+        return result;
+    }
+
     public MCs refine(MCs refinement) {
         if (optimize) {
             if (this.isTrue())
@@ -98,6 +132,9 @@ public abstract class MCs {
     }
 
     public static MCs join(MCs... conditions) {
+        if (conditions.length == 0) {
+            return FALSE;
+        }
         List<MCs> list = new ArrayList<>();
         for (MCs c : conditions) {
             if (optimize) {
@@ -107,6 +144,9 @@ public abstract class MCs {
                     continue;
             }
             list.add(c);
+        }
+        if (list.isEmpty()) {
+            return FALSE;
         }
         return new Join(list);
     }
@@ -121,6 +161,9 @@ public abstract class MCs {
                     continue;
             }
             list.add(c);
+        }
+        if (list.isEmpty()) {
+            return FALSE;
         }
         return new Join(list);
     }
@@ -334,7 +377,9 @@ public abstract class MCs {
         }
 
         if (mcs.isRefine()) {
-            List<MCs> ops = new ArrayList<>(new HashSet<>(flatRefineOperands(mcs)));
+            List<MCs> flattened = flatRefineOperands(mcs);
+            Set<MCs> unique = new HashSet<>(flattened);
+            List<MCs> ops = new ArrayList<>(unique);
             MCs result = TRUE;
             for (MCs op : ops) {
                 result = result.refine(op);

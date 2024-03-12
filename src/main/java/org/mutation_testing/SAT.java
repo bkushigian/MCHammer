@@ -1,5 +1,6 @@
 package org.mutation_testing;
 
+import java.util.List;
 import java.util.Map;
 
 import com.github.javaparser.ast.expr.BinaryExpr;
@@ -10,14 +11,24 @@ import com.microsoft.z3.*;
 
 public class SAT {
 
-    boolean checkPredicate(Expression e, Map<NameExpr, ResolvedType> types) {
+    boolean checkConjunction(List<Expression> exprs, Map<NameExpr, ResolvedType> types) {
         Context ctx = new Context();
         Solver s = ctx.mkSolver();
+        for (Expression expr : exprs) {
+
+            // s.
+
+        }
         // TODO: Check the predicate
 
         ctx.close();
         return false;
     }
+
+    void generateConstraintsForExpression(Solver s, Expression e, Map<NameExpr, ResolvedType> types) {
+    }
+
+
 
     /**
      * Special case of refinement: if there is a conjunction of two relational

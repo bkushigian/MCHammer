@@ -38,6 +38,10 @@ public class MCsCollector extends GenericVisitorAdapter<MCs, MCs> {
 
     Map<MCs, Node> endBlock = new HashMap<>();
 
+    public Map<MCs, Node> getEndBlock() {
+        return endBlock;
+    }
+
     @Override
     public MCs visit(MethodDeclaration n, MCs arg) {
         return super.visit(n, arg);
@@ -96,13 +100,13 @@ public class MCsCollector extends GenericVisitorAdapter<MCs, MCs> {
                 MCs left = n.getLeft().accept(this, arg); // Condition after left
                 MCs rightPC = left.refine(predicates(n.getLeft()));
                 MCs right = n.getRight().accept(this, rightPC);
-                return join(left, right);
+                return join(left.refine(predicates(neg(n.getLeft()))), right);
             }
             case OR: {
                 MCs left = n.getLeft().accept(this, arg); // Condition after left
                 MCs rightPC = left.refine(predicates(neg(n.getLeft())));
                 MCs right = n.getRight().accept(this, rightPC);
-                return join(left, right);
+                return join(left.refine(predicates(n.getLeft())), right);
             }
             case EQUALS:
             case NOT_EQUALS: {
