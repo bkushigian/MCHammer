@@ -8,8 +8,8 @@ import java.util.Set;
 import java.util.StringJoiner;
 
 import org.mutation_testing.smt.SMTConstraintGenerator;
+import static org.mutation_testing.ExprUtils.and;
 
-import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.BooleanLiteralExpr;
 import com.github.javaparser.ast.expr.Expression;
 import com.microsoft.z3.BoolSort;
@@ -318,7 +318,7 @@ public abstract class MCs {
 
             for (Expression l : lhs) {
                 for (Expression r : rhs) {
-                    result.add(new BinaryExpr(l, r, BinaryExpr.Operator.AND));
+                    result.add(and(l, r));
                 }
             }
 

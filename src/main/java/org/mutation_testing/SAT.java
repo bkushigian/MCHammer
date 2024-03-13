@@ -9,6 +9,8 @@ import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.microsoft.z3.*;
 
+import static org.mutation_testing.ExprUtils.and;
+
 public class SAT {
 
     boolean checkConjunction(List<Expression> exprs, Map<NameExpr, ResolvedType> types) {
@@ -115,14 +117,6 @@ public class SAT {
             default:
                 return false;
         }
-    }
-
-    static Expression and(Expression lhs, Expression rhs) {
-        return new BinaryExpr(lhs.clone(), rhs.clone(), BinaryExpr.Operator.AND);
-    }
-
-    static Expression or(Expression lhs, Expression rhs) {
-        return new BinaryExpr(lhs.clone(), rhs.clone(), BinaryExpr.Operator.OR);
     }
 
     static BinaryExpr reverseBinaryExpr(BinaryExpr binExpr) {

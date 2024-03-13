@@ -20,18 +20,22 @@ import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.printer.configuration.PrettyPrinterConfiguration;
+import com.github.javaparser.printer.configuration.PrinterConfiguration;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 
 public class SMTConstraintGeneratorTest {
 
+    PrinterConfiguration prettyPrintConf = new PrettyPrinterConfiguration();
     @Before
     public void setUp() {
         CombinedTypeSolver typeSolver = new CombinedTypeSolver();
         typeSolver.add(new ReflectionTypeSolver());
         StaticJavaParser.getParserConfiguration().setSymbolResolver(new JavaSymbolSolver(typeSolver));
         MCs.setOptimize(true);
+
     }
 
     MCsCollector collectMCs(MethodDeclaration method) {
@@ -71,7 +75,7 @@ public class SMTConstraintGeneratorTest {
                 int i = 0;
                 for (Expression e : satMCs) {
                     i ++;
-                    System.out.println("  " + i + ": " + e);
+                    System.out.println("  " + i + ": " + e.toString(prettyPrintConf));
                 }
                 sat.addAll(satMCs);
                 nodeToMCs.put(new NodeWithPos(node), satMCs);
@@ -133,8 +137,8 @@ public class SMTConstraintGeneratorTest {
     public void testGenerateConstraintsEq01() {
         String p = TestUtils.makeClassFromExpr("boolean",
          "isVowel",
-         "ch == 'a' || ch == 'o'",
-          "int ch");
+         "ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u'",
+          "char ch");
         MethodDeclaration m = TestUtils.getMethod(p);
         MCsCollector collector = collectMCs(m);
         Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToMCs(collector);
