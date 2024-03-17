@@ -6,10 +6,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.mutation_testing</groupId>
-  <artifactId>abstract-state-mutator</artifactId>
+  <artifactId>MCHammer</artifactId>
   <version>1.0-SNAPSHOT</version>
 
-  <name>abstract-state-mutator</name>
+  <name>MCHammer</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
