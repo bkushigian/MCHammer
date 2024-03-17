@@ -82,6 +82,7 @@ public class MCsCollector extends GenericVisitorAdapter<MCs, MCs> {
         // First, skip a null check
         // TODO: Handle Null Correctly
         if (isNullCheck(n.getCondition())){
+            System.out.println("Skipping null check");
             return arg;
         }
         // First refine states based on condition
@@ -108,12 +109,18 @@ public class MCsCollector extends GenericVisitorAdapter<MCs, MCs> {
     public MCs visit(BinaryExpr n, MCs arg) {
         switch (n.getOperator()) {
             case AND: {
+                if (isNullCheck(n.getLeft())) {
+                    return n.getRight().accept(this, arg);
+                }
                 MCs left = n.getLeft().accept(this, arg); // Condition after left
                 MCs rightPC = left.refine(predicates(n.getLeft()));
                 MCs right = n.getRight().accept(this, rightPC);
                 return join(left.refine(predicates(neg(n.getLeft()))), right);
             }
             case OR: {
+                if (isNullCheck(n.getLeft())) {
+                    return n.getRight().accept(this, arg);
+                }
                 MCs left = n.getLeft().accept(this, arg); // Condition after left
                 MCs rightPC = left.refine(predicates(neg(n.getLeft())));
                 MCs right = n.getRight().accept(this, rightPC);

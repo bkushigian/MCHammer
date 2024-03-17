@@ -27,6 +27,8 @@ import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 
+import javassist.compiler.ast.MethodDecl;
+
 public class SMTConstraintGeneratorTest {
 
     PrinterConfiguration prettyPrintConf = new PrettyPrinterConfiguration();
@@ -56,7 +58,7 @@ public class SMTConstraintGeneratorTest {
      * MCs, asserts the number of satisfiable MCs, and returns a map from
      * collections of MCs to nodes
      */
-    public Map<NodeWithPos, List<Expression>> getNodesToMCs(MCsCollector collector) {
+    public Map<NodeWithPos, List<Expression>> getNodesToSatMCs(MCsCollector collector) {
         List<Expression> sat = new ArrayList<>();
 
         Map<NodeWithPos, List<Expression>> nodeToMCs = new HashMap<>();
@@ -94,7 +96,7 @@ public class SMTConstraintGeneratorTest {
         TestUtils.printProgramWithLinenumbers(p);
         MethodDeclaration m = TestUtils.getMethod(p);
         MCsCollector collector = collectMCs(m);
-        Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToMCs(collector);
+        Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToSatMCs(collector);
         List<Expression> allMCs = nodesToMCs.values().stream().flatMap(List::stream).collect(Collectors.toList());
         assertEquals(3, allMCs.size());
     }
@@ -109,7 +111,7 @@ public class SMTConstraintGeneratorTest {
         TestUtils.printProgramWithLinenumbers(p);
         MethodDeclaration m = TestUtils.getMethod(p);
         MCsCollector collector = collectMCs(m);
-        Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToMCs(collector);
+        Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToSatMCs(collector);
         List<Expression> allMCs = nodesToMCs.values().stream().flatMap(List::stream).collect(Collectors.toList());
         assertEquals(3, allMCs.size());
     }
@@ -123,7 +125,7 @@ public class SMTConstraintGeneratorTest {
         TestUtils.printProgramWithLinenumbers(p);
         MethodDeclaration m = TestUtils.getMethod(p);
         MCsCollector collector = collectMCs(m);
-        Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToMCs(collector);
+        Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToSatMCs(collector);
         List<Expression> allMCs = nodesToMCs.values().stream().flatMap(List::stream).collect(Collectors.toList());
         System.out.println("   === All MCs ===");
         int mcNo = 0;
@@ -142,7 +144,7 @@ public class SMTConstraintGeneratorTest {
           "char ch");
         MethodDeclaration m = TestUtils.getMethod(p);
         MCsCollector collector = collectMCs(m);
-        Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToMCs(collector);
+        Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToSatMCs(collector);
         List<Expression> allMCs = nodesToMCs.values().stream().flatMap(List::stream).collect(Collectors.toList());
         assertEquals(6, allMCs.size());
     }
@@ -156,7 +158,7 @@ public class SMTConstraintGeneratorTest {
         System.out.println(p);
         MethodDeclaration m = TestUtils.getMethod(p);
         MCsCollector collector = collectMCs(m);
-        Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToMCs(collector);
+        Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToSatMCs(collector);
         List<Expression> allMCs = nodesToMCs.values().stream().flatMap(List::stream).collect(Collectors.toList());
         assertEquals(2, allMCs.size());
     }
@@ -169,14 +171,13 @@ public class SMTConstraintGeneratorTest {
         System.out.println(p);
         MethodDeclaration m = TestUtils.getMethod(p);
         MCsCollector collector = collectMCs(m);
-        Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToMCs(collector);
+        Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToSatMCs(collector);
         List<Expression> allMCs = nodesToMCs.values().stream().flatMap(List::stream).collect(Collectors.toList());
         // Expect 3 MCs:
         // Yes a
         // No a, yes e
         // No a, no e
         assertEquals(3, allMCs.size());
-
     }
 
     @Test
@@ -187,7 +188,7 @@ public class SMTConstraintGeneratorTest {
         System.out.println(p);
         MethodDeclaration m = TestUtils.getMethod(p);
         MCsCollector collector = collectMCs(m);
-        Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToMCs(collector);
+        Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToSatMCs(collector);
         List<Expression> allMCs = nodesToMCs.values().stream().flatMap(List::stream).collect(Collectors.toList());
         // Expect 3 MCs:
         // Yes a
@@ -196,6 +197,48 @@ public class SMTConstraintGeneratorTest {
         assertEquals(4, allMCs.size());
 
     }
+
+    @Test
+    public void testNullHandling01() {
+        String p = new JavaFileBuilder("TestClass")
+                .addImport("java.util.List")
+                .addMethod("boolean", "isEmpty", new String[] { "List l" },
+                        "if (l == null) { throw new NullPointerException(); } return l.isEmpty();")
+                .toString();
+        MethodDeclaration m = TestUtils.getMethod(p);
+        MCsCollector collector = collectMCs(m);
+        Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToSatMCs(collector);
+        List<Expression> allMCs = nodesToMCs.values().stream().flatMap(List::stream).collect(Collectors.toList());
+        assertEquals(2, allMCs.size());
+    }
+
+    @Test
+    public void testNullHandling02() {
+        String p = new JavaFileBuilder("TestClass")
+                .addImport("java.util.List")
+                .addMethod("Boolean", "isEmpty", new String[] { "List l" },
+                        "if (l == null) { return null; } return l.isEmpty();")
+                .toString();
+        MethodDeclaration m = TestUtils.getMethod(p);
+        MCsCollector collector = collectMCs(m);
+        Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToSatMCs(collector);
+        List<Expression> allMCs = nodesToMCs.values().stream().flatMap(List::stream).collect(Collectors.toList());
+        assertEquals(2, allMCs.size());
+    }   
+
+    @Test
+    public void testNullHandling03() {
+        String p = new JavaFileBuilder("TestClass")
+                .addImport("java.util.List")
+                .addMethod("boolean", "isEmpty", new String[] { "List l" },
+                        "return l == null || l.isEmpty();")
+                .toString();
+        MethodDeclaration m = TestUtils.getMethod(p);
+        MCsCollector collector = collectMCs(m);
+        Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToSatMCs(collector);
+        List<Expression> allMCs = nodesToMCs.values().stream().flatMap(List::stream).collect(Collectors.toList());
+        assertEquals(2, allMCs.size());
+    }   
 
 
     public static class NodeWithPos { 

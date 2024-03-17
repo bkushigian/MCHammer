@@ -35,9 +35,10 @@ public class JavaFileBuilder {
         return this;
     }
 
-    public JavaFileBuilder addMethod(String type, String name, String[] args,  String body) {
+    public JavaFileBuilder addMethod(String type, String name, String[] args,  String...body) {
         String joinedArgs = String.join(", ", args);
-        methods.add(type + " " + name + "(" + joinedArgs + ")" + "{ " + body + " }");
+        String joinedBody = String.join("\n", body);
+        methods.add(type + " " + name + "(" + joinedArgs + ")" + "{ " + joinedBody + " }");
         return this;
     }
 

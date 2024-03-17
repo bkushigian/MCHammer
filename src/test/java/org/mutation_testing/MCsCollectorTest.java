@@ -1,5 +1,9 @@
 package org.mutation_testing;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mutation_testing.ExprUtils.not;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,6 +16,8 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
@@ -23,6 +29,10 @@ public class MCsCollectorTest {
         typeSolver.add(new ReflectionTypeSolver());
         StaticJavaParser.getParserConfiguration().setSymbolResolver(new JavaSymbolSolver(typeSolver));
         MCs.setOptimize(true);
+    }
+
+    Expression p(String expr) {
+        return StaticJavaParser.parseExpression(expr);
     }
 
     Map<MCs, Node> runOnProgram(String p) {
@@ -100,6 +110,57 @@ public class MCsCollectorTest {
                 "  }" +
                 "}";
         runOnProgram(p);
+    }
+
+    @Test
+    public void testNullHandling01() {
+        String p = new JavaFileBuilder("TestClass")
+                .addImport("java.util.List")
+                .addMethod("boolean", "isEmpty", new String[] { "List l" },
+                        "if (l == null) { throw new NullPointerException(); } return l.isEmpty();")
+                .toString();
+
+        Map<MCs, Node> endBlock = runOnProgram(p);
+        assertEquals(1, endBlock.size());
+
+        List<Expression> conditions = endBlock.keySet().iterator().next().toConditions();
+        assertEquals(2, conditions.size());
+        assertTrue(conditions.contains(p("l.isEmpty()")));
+        assertTrue(conditions.contains(p("!l.isEmpty()")));
+    }
+
+    @Test
+    public void testNullHandling02() {
+        String p = new JavaFileBuilder("TestClass")
+                .addImport("java.util.List")
+                .addMethod("Boolean", "isEmpty", new String[] { "List l" },
+                        "if (l == null) { return null; } return l.isEmpty();")
+                .toString();
+
+        Map<MCs, Node> endBlock = runOnProgram(p);
+        assertEquals(1, endBlock.size());
+
+        List<Expression> conditions = endBlock.keySet().iterator().next().toConditions();
+        assertEquals(2, conditions.size());
+        assertTrue(conditions.contains(p("l.isEmpty()")));
+        assertTrue(conditions.contains(p("!l.isEmpty()")));
+    }
+
+    @Test
+    public void testNullHandling03() {
+        String p = new JavaFileBuilder("TestClass")
+                .addImport("java.util.List")
+                .addMethod("boolean", "isEmpty", new String[] { "List l" },
+                        "return l == null || l.isEmpty();")
+                .toString();
+
+        Map<MCs, Node> endBlock = runOnProgram(p);
+        assertEquals(1, endBlock.size());
+
+        List<Expression> conditions = endBlock.keySet().iterator().next().toConditions();
+        assertEquals(2, conditions.size());
+        assertTrue(conditions.contains(p("l.isEmpty()")));
+        assertTrue(conditions.contains(p("!l.isEmpty()")));
     }
 
 }

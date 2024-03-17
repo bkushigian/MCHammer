@@ -4,6 +4,7 @@ import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.ConditionalExpr;
 import com.github.javaparser.ast.expr.EnclosedExpr;
 import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.UnaryExpr;
 
 public class ExprUtils {
     public static Expression and(Expression lhs, Expression rhs) {
@@ -35,6 +36,10 @@ public class ExprUtils {
             return e;
         }
         return new EnclosedExpr(e);
+    }
+
+    public static Expression not(Expression e) {
+        return new UnaryExpr(e, UnaryExpr.Operator.LOGICAL_COMPLEMENT);
     }
 
     public static Expression eq(Expression left, Expression right) {
