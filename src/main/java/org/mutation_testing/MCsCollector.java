@@ -33,6 +33,12 @@ import static org.mutation_testing.MCs.predicates;
 import static org.mutation_testing.MCs.FALSE;
 import static org.mutation_testing.MCs.TRUE;
 import static org.mutation_testing.MCs.join;
+import static org.mutation_testing.ExprUtils.lt;
+import static org.mutation_testing.ExprUtils.gt;
+import static org.mutation_testing.ExprUtils.isNullCheck;
+import static org.mutation_testing.ExprUtils.eq;
+import static org.mutation_testing.ExprUtils.neq;
+
 
 public class MCsCollector extends GenericVisitorAdapter<MCs, MCs> {
 
@@ -73,6 +79,11 @@ public class MCsCollector extends GenericVisitorAdapter<MCs, MCs> {
 
     @Override
     public MCs visit(IfStmt n, MCs arg) {
+        // First, skip a null check
+        // TODO: Handle Null Correctly
+        if (isNullCheck(n.getCondition())){
+            return arg;
+        }
         // First refine states based on condition
         MCs conditionResult = n.getCondition().accept(this, arg);
         MCs condTrue = predicates(n.getCondition().clone());
@@ -110,6 +121,10 @@ public class MCsCollector extends GenericVisitorAdapter<MCs, MCs> {
             }
             case EQUALS:
             case NOT_EQUALS: {
+                if (n.getLeft().isNullLiteralExpr() || n.getRight().isNullLiteralExpr()) {
+                    // TODO: how should we handle null checks?
+                    return arg;
+                }
                 MCs left = n.getLeft().accept(this, arg);
                 MCs right = n.getRight().accept(this, arg);
                 MCs both = eqPredicates(n.getLeft(), n.getRight());
@@ -141,6 +156,9 @@ public class MCsCollector extends GenericVisitorAdapter<MCs, MCs> {
         ResolvedMethodDeclaration r = n.resolve();
         ResolvedType rt = r.getReturnType();
         MCs mcs = super.visit(n, arg);
+        if (rt.isPrimitive() && rt.asPrimitive().isBoolean()) {
+            return mcs.refine(trueFalsePredicates(n));
+        }
         if (rt.isReferenceType() && rt.asReferenceType().getQualifiedName().equals("java.lang.Boolean")) {
             return mcs.refine(trueFalsePredicates(n));
         }
@@ -224,37 +242,6 @@ public class MCsCollector extends GenericVisitorAdapter<MCs, MCs> {
 
     public static MCs.Predicates trueFalsePredicates(Expression expr) {
         return predicates(expr.clone(), neg(expr.clone()));
-    }
-
-    public static Expression eq(Expression left, Expression right) {
-        return new BinaryExpr(left, right, BinaryExpr.Operator.EQUALS);
-    }
-
-    public static Expression neq(Expression left, Expression right) {
-        return new BinaryExpr(left, right, BinaryExpr.Operator.NOT_EQUALS);
-    }
-
-    public static Expression gt(Expression left, Expression right) {
-        return new BinaryExpr(left, right, BinaryExpr.Operator.GREATER);
-    }
-
-    public static Expression ge(Expression left, Expression right) {
-        return new BinaryExpr(left, right, BinaryExpr.Operator.GREATER_EQUALS);
-    }
-
-    public static Expression lt(Expression left, Expression right) {
-        return new BinaryExpr(left, right, BinaryExpr.Operator.LESS);
-    }
-
-    public static Expression le(Expression left, Expression right) {
-        return new BinaryExpr(left, right, BinaryExpr.Operator.LESS_EQUALS);
-    }
-
-    public static Expression parens(Expression expr) {
-        if (expr.isEnclosedExpr()) {
-            return expr;
-        }
-        return new EnclosedExpr(expr);
     }
 
     public static Expression neg(Expression expr) {

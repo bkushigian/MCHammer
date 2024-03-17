@@ -37,6 +37,29 @@ public class ExprUtils {
         return new EnclosedExpr(e);
     }
 
+    public static Expression eq(Expression left, Expression right) {
+        return new BinaryExpr(left, right, BinaryExpr.Operator.EQUALS);
+    }
+
+    public static Expression neq(Expression left, Expression right) {
+        return new BinaryExpr(left, right, BinaryExpr.Operator.NOT_EQUALS);
+    }
+
+    public static Expression gt(Expression left, Expression right) {
+        return new BinaryExpr(left, right, BinaryExpr.Operator.GREATER);
+    }
+
+    public static Expression ge(Expression left, Expression right) {
+        return new BinaryExpr(left, right, BinaryExpr.Operator.GREATER_EQUALS);
+    }
+
+    public static Expression lt(Expression left, Expression right) {
+        return new BinaryExpr(left, right, BinaryExpr.Operator.LESS);
+    }
+
+    public static Expression le(Expression left, Expression right) {
+        return new BinaryExpr(left, right, BinaryExpr.Operator.LESS_EQUALS);
+    }
 
     public static boolean isOr(Expression e) {
         return e instanceof BinaryExpr && ((BinaryExpr) e).getOperator().equals(BinaryExpr.Operator.OR);
@@ -48,6 +71,20 @@ public class ExprUtils {
 
     public static boolean isConditionalExpr(Expression e) {
         return e instanceof ConditionalExpr;
+    }
+
+    public static boolean isNullCheck(Expression e) {
+        if (! (e instanceof BinaryExpr)) {
+            return false;
+        }
+        BinaryExpr be = (BinaryExpr) e;
+        switch (be.getOperator()) {
+            case EQUALS:
+            case NOT_EQUALS:
+                return be.getRight().isNullLiteralExpr() || be.getLeft().isNullLiteralExpr();
+            default:
+                return false;
+        }
     }
 
 }

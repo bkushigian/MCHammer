@@ -44,6 +44,7 @@ public class App {
         }
         final List<Mutant> mutants = mutateFilenames();
         Mutant.writeMutantsLog(mutantsLog, mutants);
+        System.out.println("Wrote mutants log to " + mutantsLog);
         writeMutantsToDisk(mutants);
         System.out.println("Generated " + mutants.size() + " mutants in " + mutantsDir());
     }

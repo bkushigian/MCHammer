@@ -52,7 +52,7 @@ public abstract class MCs {
     /**
      * Should we optimize the MCs when we create them?
      */
-    static boolean optimize = false;
+    static boolean optimize = true;
 
     public static void setOptimize(boolean optimize) {
         MCs.optimize = optimize;
@@ -103,8 +103,11 @@ public abstract class MCs {
         for (Expression e : simplifiedConditions) {
             solver.push();
 
-            Expr<? extends Sort> constraints = SMTConstraintGenerator.generateConstraints(e, ctx);
-            solver.add((Expr<BoolSort>)constraints);
+            SMTConstraintGenerator.SMTConstraint smtConstraint = SMTConstraintGenerator.generateConstraints(e, ctx);
+            solver.add((Expr<BoolSort>)smtConstraint.expr);
+            for (Expr<BoolSort> assertion : smtConstraint.assertions) {
+                solver.add(assertion);
+            }
             Status status = solver.check();
             if (status == Status.SATISFIABLE){
                 result.add(e);

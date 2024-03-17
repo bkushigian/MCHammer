@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mutation_testing.JavaFileBuilder;
 import org.mutation_testing.MCs;
 import org.mutation_testing.MCsCollector;
 import org.mutation_testing.TestUtils;
@@ -144,6 +145,56 @@ public class SMTConstraintGeneratorTest {
         Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToMCs(collector);
         List<Expression> allMCs = nodesToMCs.values().stream().flatMap(List::stream).collect(Collectors.toList());
         assertEquals(6, allMCs.size());
+    }
+
+    @Test
+    public void testGenerateConstraintsMethodCall01() {
+        JavaFileBuilder b = new JavaFileBuilder("TestClass");
+        b.addImport("java.util.*");
+        b.addMethod("boolean", "isEmpty", new String[] {"List l"}, "return l.isEmpty();");
+        String p = b.toString();
+        System.out.println(p);
+        MethodDeclaration m = TestUtils.getMethod(p);
+        MCsCollector collector = collectMCs(m);
+        Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToMCs(collector);
+        List<Expression> allMCs = nodesToMCs.values().stream().flatMap(List::stream).collect(Collectors.toList());
+        assertEquals(2, allMCs.size());
+    }
+
+    @Test
+    public void testGenerateConstraintsMethodCall02() {
+        JavaFileBuilder b = new JavaFileBuilder("TestClass");
+        b.addMethod("boolean", "hasVowel", new String[] {"String s"}, "return s.contains(\"a\") || s.contains(\"e\");");
+        String p = b.toString();
+        System.out.println(p);
+        MethodDeclaration m = TestUtils.getMethod(p);
+        MCsCollector collector = collectMCs(m);
+        Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToMCs(collector);
+        List<Expression> allMCs = nodesToMCs.values().stream().flatMap(List::stream).collect(Collectors.toList());
+        // Expect 3 MCs:
+        // Yes a
+        // No a, yes e
+        // No a, no e
+        assertEquals(3, allMCs.size());
+
+    }
+
+    @Test
+    public void testGenerateConstraintsMethodCall03() {
+        JavaFileBuilder b = new JavaFileBuilder("TestClass");
+        b.addMethod("boolean", "hasVowel", new String[] {"String s"}, "return s.contains(\"a\") || s.contains(\"e\") || s.contains(\"i\");");
+        String p = b.toString();
+        System.out.println(p);
+        MethodDeclaration m = TestUtils.getMethod(p);
+        MCsCollector collector = collectMCs(m);
+        Map<NodeWithPos, List<Expression>> nodesToMCs = getNodesToMCs(collector);
+        List<Expression> allMCs = nodesToMCs.values().stream().flatMap(List::stream).collect(Collectors.toList());
+        // Expect 3 MCs:
+        // Yes a
+        // No a, yes e
+        // No a, no e
+        assertEquals(4, allMCs.size());
+
     }
 
 

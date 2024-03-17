@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.mutation_testing.DataVisitor;
+import org.mutation_testing.MCs;
+import org.mutation_testing.MCsCollector;
 import org.mutation_testing.Source;
 
 import java.nio.file.Files;
@@ -13,6 +16,7 @@ import java.io.IOException;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
@@ -26,6 +30,7 @@ import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.IntegerLiteralExpr;
 import com.github.javaparser.ast.expr.LongLiteralExpr;
 import com.github.javaparser.ast.expr.UnaryExpr;
+import com.github.javaparser.ast.stmt.ReturnStmt;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.resolution.TypeSolver;
 import com.github.javaparser.resolution.types.ResolvedType;
@@ -71,7 +76,9 @@ public class Mutator extends VoidVisitorAdapter<Void> {
         this.source = new Source(filename, fileContents);
         mutants = new ArrayList<>();
 
+        System.out.println("Mutating file " + filename);
         CompilationUnit cu = StaticJavaParser.parse(fileContents);
+        cu.accept(new DataVisitor(), null);
         cu.accept(this, null);
 
         List<Mutant> result = mutants;
@@ -107,6 +114,7 @@ public class Mutator extends VoidVisitorAdapter<Void> {
     }
 
     protected void addMutantFromCondition(Expression originalExpr, Expression mutationCondition) {
+        System.out.println("    Adding mutant for " + originalExpr + " with condition " + mutationCondition);
         Expression mutatedExpr = getInfectingExpression(originalExpr);
         Expression clonedOriginalExpr = new EnclosedExpr(originalExpr.clone());
         clonedOriginalExpr.setParentNode(null);
@@ -115,11 +123,11 @@ public class Mutator extends VoidVisitorAdapter<Void> {
         }
         Expression repl = new ConditionalExpr(new EnclosedExpr(mutationCondition), mutatedExpr, clonedOriginalExpr);
         repl = new EnclosedExpr(repl);
-        addMutant(originalExpr, repl);
+        addMutant(originalExpr, repl, mutationCondition);
     }
 
-    protected void addMutant(Expression orig, Expression repl) {
-        Mutant mutant = new Mutant(mid, source, orig, repl);
+    protected void addMutant(Expression orig, Expression repl, Expression condition) {
+        Mutant mutant = new Mutant(mid, source, orig, repl, condition);
         mutants.add(mutant);
         mid += 1;
     }
@@ -130,6 +138,7 @@ public class Mutator extends VoidVisitorAdapter<Void> {
 
     @Override
     public void visit(MethodDeclaration n, Void arg) {
+        System.out.println("  Mutating method " + n.getName());
         if (signature != null) {
             throw new IllegalStateException("nested methods");
         }
@@ -137,15 +146,40 @@ public class Mutator extends VoidVisitorAdapter<Void> {
         parameters = n.getParameters();
         store = new HashMap<>();
         int midOld = mid;
-        super.visit(n, arg);
+        MCsCollector c = new MCsCollector();
+        System.out.println("Collecting mcs");
+        c.collectMutationConditions(n);
+        System.out.println("Finished collecting mcs");
+        Map<MCs, Node> endBlocks = c.getEndBlock();
+        System.out.println("  Found " + endBlocks.size() + " end blocks");
+        for (Map.Entry<MCs, Node> e : endBlocks.entrySet()) {
+            Node node = e.getValue();
+            System.out.println("    Node: " + node);
+            MCs mcs = e.getKey();
+            System.out.println("    MCs: " + mcs);
+            List<Expression> satConditions = mcs.toSATConditions();
+            System.out.println("    Found " + satConditions.size() + " mcs for " + node.getClass().getSimpleName() + " " + node);
+            for (Expression mc : satConditions) {
+                System.out.println("      " + mc);
+            }
+
+            Expression toMutate;
+
+            if (node instanceof ReturnStmt) {
+                ReturnStmt rs = (ReturnStmt) node;
+                toMutate = rs.getExpression().get();
+            } else {
+                throw new IllegalStateException("Unhandled node type " + node);
+            }
+            for (Expression mc : mcs.toSATConditions()) {
+                addMutantFromCondition(toMutate, mc);
+
+            }
+        }
         signature = null;
         parameters = null;
         store = null;
         int midNew = mid;
         System.out.println("    Mutated " + (midNew - midOld) + " mutants for method " + n.getName());
-    }
-
-    @Override
-    public void visit(BinaryExpr n, Void arg) {
     }
 }
