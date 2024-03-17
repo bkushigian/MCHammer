@@ -24,8 +24,8 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeS
 public class App {
     List<String> filenames = new ArrayList<>();
     List<String> sourceRoots = new ArrayList<>();
-    String outdir = "msav_out";
-    String mutantsLog = "mutants.msav.log";
+    String outdir = "mchammer_out";
+    String mutantsLog = "mutants.mchammer.log";
     Mutator mutator = new Mutator();
 
     JavaSymbolSolver symbolSolver;
